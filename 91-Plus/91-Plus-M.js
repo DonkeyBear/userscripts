@@ -31,10 +31,15 @@ const observer = new MutationObserver(() => {
     footer: document.querySelector("footer"),
     // 自動滾動頁面捲軸
     autoScroll: document.querySelector(".autoscroll"),
+    // 頁首的返回列
+    headerBackplace: document.querySelector(".backplace"),
+    // 頁首的Key選項
+    keys: document.querySelector(".set .keys"),
     // 其餘的Google廣告
     adsByGoogle: document.querySelectorAll(".adsbygoogle")
   }
   for (let selected in elementShouldBlock) {
+    // 將上述元素隱藏
     if (elementShouldBlock[selected]) {
       if (elementShouldBlock[selected].length === undefined) {
         // Node
@@ -45,6 +50,12 @@ const observer = new MutationObserver(() => {
           elem.style.display = "none";
         }
       }
+    }
+  }
+  if (document.querySelectorAll(".setint .hr")) {
+    // 隱藏頁首部分功能鈕
+    for (let i = 3; i < 6; i++) {
+      document.querySelectorAll(".setint .hr")[i].style.display = "none";
     }
   }
 });
