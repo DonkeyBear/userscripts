@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.96
+// @version      0.96.1
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -16,6 +16,8 @@ if (currentUrl.match(/\/song\//)) {
   let newUrl = `https://www.91pu.com.tw/m/tone.shtml?id=${sheetId}`;
   window.location.replace(newUrl);
 }
+
+document.querySelector("html").style.backgroundColor = "#f7f7f7";
 
 let observerCheckList = {
   modifyTitle: false,
