@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.9
+// @version      0.93
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -63,6 +63,17 @@ const observer = new MutationObserver(() => {
   /* 更換網頁標題 */
   if (document.querySelector("#mtitle")) {
     document.title = document.querySelector("#mtitle").innerText;
+  }
+
+  /* 更改頁首內容物排列方式 */
+  for (let elem of [
+    document.querySelector(".setint"),
+    document.querySelector(".plays .capo")
+  ]) {
+    if (elem) {
+      elem.style.display = "flex";
+      elem.style.justifyContent = "space-between";
+    }
   }
 });
 observer.observe(document.body, { childList: true, subtree: true });
