@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.94
+// @version      0.95
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -15,6 +15,13 @@ if (currentUrl.match(/\/song\//)) {
   let sheetId = currentUrl.match(/\/\d*\./)[0].slice(1, -1);
   let newUrl = `https://www.91pu.com.tw/m/tone.shtml?id=${sheetId}`;
   window.location.replace(newUrl);
+}
+
+let observerCheckList = {
+  modifyTitle: false,
+  modifyHeaderBackground: false,
+  modifyHeaderFlex: false,
+  modifyTransposeButton: false
 }
 
 const observer = new MutationObserver(() => {
@@ -56,32 +63,71 @@ const observer = new MutationObserver(() => {
   if (document.querySelectorAll(".setint .hr")) {
     // 隱藏頁首部分功能鈕
     for (let i = 3; i < 6; i++) {
-      document.querySelectorAll(".setint .hr")[i].style.display = "none";
+      if (document.querySelectorAll(".setint .hr")[i]) {
+        document.querySelectorAll(".setint .hr")[i].style.display = "none";
+      }
     }
   }
 
-  /* 更換網頁標題 */
-  if (document.querySelector("#mtitle")) {
-    document.title = `${document.querySelector("#mtitle").innerText} | 91+ M`;
+  /* 更改網頁標題 */
+  if (!observerCheckList.modifyTitle) {
+    if (document.querySelector("#mtitle")) {
+      document.title = `${document.querySelector("#mtitle").innerText} | 91+ M`;
+      observerCheckList.modify = true;
+    }
   }
 
   /* 更改頁首背景樣式 */
-  if (document.querySelector("header")) {
-    document.querySelector("header").style.backdropFilter = "blur(5px)";
-    document.querySelector("header").style.backgroundColor = "rgba(25, 20, 90, 0.5)";
+  if (!observerCheckList.modifyHeaderBackground) {
+    if (document.querySelector("header")) {
+      document.querySelector("header").style.backdropFilter = "blur(5px) saturate(80%)";
+      document.querySelector("header").style.backgroundColor = "rgba(25, 20, 90, 0.5)";
+      observerCheckList.modifyHeaderBackground = true;
+    }
   }
 
   /* 更改頁首內容物排列方式 */
-  for (let elem of [
-    document.querySelector(".setint"),
-    document.querySelector(".plays .capo")
-  ]) {
-    if (elem) {
-      elem.style.display = "flex";
-      elem.style.justifyContent = "space-between";
-      if (elem.style.barderTop != "") {
-        elem.style.barderTop = "1px solid rgba(255, 255, 255, 0.2)";
+  if (!observerCheckList.modifyHeaderFlex) {
+    for (let elem of [
+      document.querySelector(".setint"),
+      document.querySelector(".plays .capo")
+    ]) {
+      if (elem) {
+        elem.style.display = "flex";
+        elem.style.justifyContent = "space-between";
+        if (elem.classList.contains("setint")) {
+          elem.style.borderTop = "1px solid rgba(255, 255, 255, 0.2)";
+        }
+        observerCheckList.modifyHeaderFlex = true;
       }
+    }
+  }
+
+  /* 刪除內建的移調鈕，建立自製的 */
+  if (!observerCheckList.modifyTransposeButton) {
+    if (document.querySelector(".capo .select")) {
+      let stringCapo = document.querySelector(".capo .select").innerText.split(" / ")[0]; // CAPO
+      let stringKey = document.querySelector(".capo .select").innerText.split(" / ")[1]; // 調
+      for (let i of document.querySelectorAll(".capo span[play]")) {
+        i.style.display = "none";
+      }
+      // 建立降調鈕
+      let spanMinus = document.createElement("span");
+      spanMinus.innerText = "－";
+      spanMinus.className = "select";
+      // 當前調
+      let spanCapo = document.createElement("span");
+      spanCapo.innerText = `Capo: ${stringCapo} (${stringKey})`;
+      // 建立降調鈕
+      let spanPlus = document.createElement("span");
+      spanPlus.innerText = "＋";
+      spanPlus.className = "select";
+      
+      for (let i of [spanMinus, spanCapo, spanPlus]) {
+        document.querySelector(".plays .capo").appendChild(i);
+      }
+
+      observerCheckList.modifyTransposeButton = true;
     }
   }
 });
