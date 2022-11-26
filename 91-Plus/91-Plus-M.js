@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.951
+// @version      0.96
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -116,6 +116,17 @@ const observer = new MutationObserver(() => {
       let spanMinus = document.createElement("span");
       spanMinus.innerText = "－";
       spanMinus.className = "select";
+      spanMinus.onclick = () => {
+        spanCapo.innerText = spanCapo.innerText.replace(/-?\d+/, match => {
+          return Number(match) - 1;
+        });
+        spanCapo.innerText = spanCapo.innerText.replace(/\(.+\)/, match => {
+          return `(${transpose(match.slice(1, -1), 1)})`;
+        });
+        for (let i of document.querySelectorAll("#tone_z .tf")) {
+          i.innerHTML = transpose(i.innerText, 1).replace(/(#|b)/g, "<sup>$&</sup>");
+        }
+      }
       // 當前調
       let spanCapo = document.createElement("span");
       spanCapo.innerText = `Capo: ${stringCapo} (${stringKey})`;
@@ -123,13 +134,76 @@ const observer = new MutationObserver(() => {
       let spanPlus = document.createElement("span");
       spanPlus.innerText = "＋";
       spanPlus.className = "select";
-      
+      spanPlus.onclick = () => {
+        spanCapo.innerText = spanCapo.innerText.replace(/-?\d+/, match => {
+          return Number(match) + 1;
+        });
+        spanCapo.innerText = spanCapo.innerText.replace(/\(.+\)/, match => {
+          return `(${transpose(match.slice(1, -1), -1)})`;
+        });
+        for (let i of document.querySelectorAll("#tone_z .tf")) {
+          i.innerHTML = transpose(i.innerText, -1).replace(/(#|b)/g, "<sup>$&</sup>");
+        }
+      }
+      // 放入功能列
       for (let i of [spanMinus, spanCapo, spanPlus]) {
         document.querySelector(".plays .capo").appendChild(i);
       }
-
       observerCheckList.modifyTransposeButton = true;
     }
   }
 });
 observer.observe(document.body, { childList: true, subtree: true });
+
+function transpose(chord, transposeValue) {
+
+  const keys = {
+    "C": "[I]", "C#": "[I#]",
+    "D": "[II]", "D#": "[II#]",
+    "E": "[III]",
+    "F": "[IV]", "F#": "[IV#]",
+    "G": "[V]", "G#": "[V#]",
+    "A": "[VI]", "A#": "[VI#]",
+    "B": "[VII]"
+  };
+
+  const pitchNameFix = {
+    "#b": "", "b#": "",
+    "E#": "F", "Fb": "E",
+    "B#": "C", "Cb": "B",
+    "C##": "D", "D##": "E",
+    "F##": "G", "G##": "A",
+    "A##": "B"
+  };
+
+  let resultChord = chord;
+
+  for (let i = 0; i < 12; i++) {
+    // first, transpose to Roman number.
+    resultChord = resultChord.replaceAll(
+      Object.keys(keys)[i],
+      Object.values(keys)[i]
+    );
+  }
+
+  for (let i = 0; i < 12; i++) {
+    // transpose offset
+    let fixedTransposeValue = (i + transposeValue) % 12;
+    if (fixedTransposeValue < 0) { fixedTransposeValue += 12 }
+    // second, transpose to pitch names.
+    resultChord = resultChord.replaceAll(
+      Object.values(keys)[i],
+      Object.keys(keys)[fixedTransposeValue]
+    );
+  }
+
+  for (let i = 0; i < 11; i++) {
+    // fix illegal pitch names.
+    resultChord = resultChord.replaceAll(
+      Object.keys(pitchNameFix)[i],
+      Object.values(pitchNameFix)[i]
+    );
+  }
+
+  return resultChord;
+}
