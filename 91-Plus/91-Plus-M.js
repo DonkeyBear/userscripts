@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.96.1
+// @version      0.96.2
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -23,6 +23,7 @@ let observerCheckList = {
   modifyTitle: false,
   modifyHeaderBackground: false,
   modifyHeaderFlex: false,
+  modifyFunctionBarMargin: false,
   modifyTransposeButton: false
 }
 
@@ -103,6 +104,14 @@ const observer = new MutationObserver(() => {
         }
         observerCheckList.modifyHeaderFlex = true;
       }
+    }
+  }
+
+  /* 更改六線譜前奏功能列邊界留白 */
+  if (!observerCheckList.modifyFunctionBarMargin) {
+    if (document.querySelector(".tfunc2")) {
+      observerCheckList.modifyFunctionBarMargin = true;
+      document.querySelector(".tfunc2").style.margin = "10px";
     }
   }
 
