@@ -2,7 +2,7 @@
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
 // @version      0.9
-// @description  打造平板看91譜的最好體驗。
+// @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
 // @match        https://www.91pu.com.tw/song/*
@@ -18,6 +18,7 @@ if (currentUrl.match(/\/song\//)) {
 }
 
 const observer = new MutationObserver(() => {
+  /* 隱藏網頁元素 */
   let elementShouldBlock = {
     // 需要倒數才能關閉的蓋版廣告
     modalAd: document.querySelector("#viptoneWindow.window"),
@@ -57,6 +58,11 @@ const observer = new MutationObserver(() => {
     for (let i = 3; i < 6; i++) {
       document.querySelectorAll(".setint .hr")[i].style.display = "none";
     }
+  }
+
+  /* 更換網頁標題 */
+  if (document.querySelector("#mtitle")) {
+    document.title = document.querySelector("#mtitle").innerText;
   }
 });
 observer.observe(document.body, { childList: true, subtree: true });
