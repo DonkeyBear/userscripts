@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.97
+// @version      0.97.1
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -67,7 +67,7 @@ const observer = new MutationObserver(() => {
 
   /* 修改頁首功能鈕（下排） */
   if (!observerCheckList.modifyHeaderFunction) {
-    if (document.querySelectorAll(".setint .hr")) {
+    if (document.querySelectorAll(".setint .hr").length == 6) {
       // 隱藏頁首部分功能鈕
       observerCheckList.modifyHeaderFunction = true;
       for (let i = 3; i < 6; i++) {
@@ -81,7 +81,7 @@ const observer = new MutationObserver(() => {
       newFunctionDiv.className = "hr";
       newFunctionButton.className = "scf";
       newFunctionButton.innerText = "全選";
-      newFunctionButton.onclick = selectText(".tonebox");
+      newFunctionButton.onclick = () => { selectText("#tone_z") };
       newFunctionDiv.appendChild(newFunctionButton);
       document.querySelector(".setint").appendChild(newFunctionDiv);
     }
