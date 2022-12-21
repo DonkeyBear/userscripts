@@ -23,6 +23,7 @@ let observerCheckList = {
   modifyTitle: false,
   modifyHeaderBackground: false,
   modifyHeaderFlex: false,
+  modifyHeaderFunction: false,
   modifyFunctionBarMargin: false,
   modifyTransposeButton: false
 }
@@ -65,18 +66,28 @@ const observer = new MutationObserver(() => {
   }
   if (document.querySelectorAll(".setint .hr")) {
     // 隱藏頁首部分功能鈕
+    observerCheckList.modifyHeaderFunction = true;
     for (let i = 3; i < 6; i++) {
       if (document.querySelectorAll(".setint .hr")[i]) {
         document.querySelectorAll(".setint .hr")[i].style.display = "none";
       }
     }
+    // 新增功能鈕
+    let newFunctionDiv = document.createElement("div");
+    let newFunctionButton = document.createElement("button");
+    newFunctionDiv.className = "hr";
+    newFunctionButton.className = "scf";
+    newFunctionButton.innerText = "全選";
+    newFunctionButton.onclick = selectText(".tonebox");
+    newFunctionDiv.appendChild(newFunctionButton);
+    document.querySelector(".setint").appendChild(newFunctionDiv);
   }
 
   /* 更改網頁標題 */
   if (!observerCheckList.modifyTitle) {
     if (document.querySelector("#mtitle")) {
       document.title = `${document.querySelector("#mtitle").innerText} | 91+ M`;
-      observerCheckList.modify = true;
+      observerCheckList.modifyTitle = true;
     }
   }
 
@@ -217,4 +228,13 @@ function transpose(chord, transposeValue) {
   }
 
   return resultChord;
+}
+
+function selectText(containerSelector) {
+  if (window.getSelection) {
+    let range = document.createRange();
+    range.selectNode(document.querySelector(containerSelector));
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+  }
 }
