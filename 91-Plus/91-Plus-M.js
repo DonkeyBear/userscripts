@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.96.2
+// @version      0.97
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -64,23 +64,27 @@ const observer = new MutationObserver(() => {
       }
     }
   }
-  if (document.querySelectorAll(".setint .hr")) {
-    // 隱藏頁首部分功能鈕
-    observerCheckList.modifyHeaderFunction = true;
-    for (let i = 3; i < 6; i++) {
-      if (document.querySelectorAll(".setint .hr")[i]) {
-        document.querySelectorAll(".setint .hr")[i].style.display = "none";
+
+  /* 修改頁首功能鈕（下排） */
+  if (!observerCheckList.modifyHeaderFunction) {
+    if (document.querySelectorAll(".setint .hr")) {
+      // 隱藏頁首部分功能鈕
+      observerCheckList.modifyHeaderFunction = true;
+      for (let i = 3; i < 6; i++) {
+        if (document.querySelectorAll(".setint .hr")[i]) {
+          document.querySelectorAll(".setint .hr")[i].style.display = "none";
+        }
       }
+      // 新增功能鈕
+      let newFunctionDiv = document.createElement("div");
+      let newFunctionButton = document.createElement("button");
+      newFunctionDiv.className = "hr";
+      newFunctionButton.className = "scf";
+      newFunctionButton.innerText = "全選";
+      newFunctionButton.onclick = selectText(".tonebox");
+      newFunctionDiv.appendChild(newFunctionButton);
+      document.querySelector(".setint").appendChild(newFunctionDiv);
     }
-    // 新增功能鈕
-    let newFunctionDiv = document.createElement("div");
-    let newFunctionButton = document.createElement("button");
-    newFunctionDiv.className = "hr";
-    newFunctionButton.className = "scf";
-    newFunctionButton.innerText = "全選";
-    newFunctionButton.onclick = selectText(".tonebox");
-    newFunctionDiv.appendChild(newFunctionButton);
-    document.querySelector(".setint").appendChild(newFunctionDiv);
   }
 
   /* 更改網頁標題 */
