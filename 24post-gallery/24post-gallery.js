@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         24Post Gallery
 // @namespace    https://github.com/DonkeyBear
-// @version      0.1
+// @version      0.2
 // @description  Gallery for 24Post
 // @author       DonkeyBear
 // @match        https://24post.co.kr/*/*
@@ -11,12 +11,10 @@
 
 let autoOpenGallery = getUrlParams("gallery"); // should be true or undefined.
 let imageElmAll = document.querySelectorAll("article img");
-if (!imageElmAll.length) { return }
-
-let imageSrcAll = new Array;
+let videoElmAll = document.querySelectorAll("article video");
+let mediaElmAll = [...imageElmAll, ...videoElmAll];
+if (!mediaElmAll.length) { return } // return when no image and video in current post.
 let currentGalleryIndex = 0;
-
-for (let elm of imageElmAll) { imageSrcAll.push(elm.src) }
 
 document.body.style.position = "unset";
 document.getElementById("new_notice_content_wrap").style.zIndex = "4999";
@@ -48,10 +46,21 @@ if (!autoOpenGallery) {
   galleryContainer.style.display = "none";
 }
 
-let galleryImage = document.createElement("img");
-galleryImage.src = imageSrcAll[currentGalleryIndex];
-galleryImage.style.maxHeight = "100%";
-galleryImage.style.maxWidth = "100%";
+let galleryCounter = document.createElement("span");
+galleryCounter.style.position = "absolute";
+galleryCounter.style.fontSize = "1.5rem";
+galleryCounter.style.fontWeight = "bold";
+galleryCounter.style.top = "1rem";
+galleryCounter.style.left = "2rem";
+galleryCounter.style.color = "whitesmoke";
+
+let galleryMediaContainer = document.createElement("div");
+galleryMediaContainer.style.height = "100%";
+galleryMediaContainer.style.width = "100%";
+galleryMediaContainer.style.display = "flex";
+galleryMediaContainer.style.alignItems = "center";
+galleryMediaContainer.style.justifyContent = "center";
+showMedia(currentGalleryIndex);
 
 let galleryButtonPrevious = document.createElement("span");
 insertIconElm(galleryButtonPrevious, "fa fa-angle-left");
@@ -61,7 +70,7 @@ galleryButtonPrevious.style.top = "calc(50% - 5rem)";
 galleryButtonPrevious.style.left = "0";
 galleryButtonPrevious.style.padding = "3rem";
 galleryButtonPrevious.style.color = "whitesmoke";
-galleryButtonPrevious.onclick = () => { changeImage(currentGalleryIndex - 1) }
+galleryButtonPrevious.onclick = () => { showMedia(currentGalleryIndex - 1) }
 
 let galleryButtonNext = document.createElement("span");
 insertIconElm(galleryButtonNext, "fa fa-angle-right");
@@ -71,7 +80,7 @@ galleryButtonNext.style.top = "calc(50% - 5rem)";
 galleryButtonNext.style.right = "0";
 galleryButtonNext.style.padding = "3rem";
 galleryButtonNext.style.color = "whitesmoke";
-galleryButtonNext.onclick = () => { changeImage(currentGalleryIndex + 1) }
+galleryButtonNext.onclick = () => { showMedia(currentGalleryIndex + 1) }
 
 let galleryButtonClose = document.createElement("span");
 insertIconElm(galleryButtonClose, "fa fa-times");
@@ -120,23 +129,14 @@ if (document.querySelector(".bd_rd_next")) {
   galleryButtonNextPost.href = addUrlParam(nextPost.href, "gallery", "true");
 }
 
-let galleryCounter = document.createElement("span");
-galleryCounter.innerText = `${currentGalleryIndex + 1} / ${imageSrcAll.length}`;
-galleryCounter.style.position = "absolute";
-galleryCounter.style.fontSize = "1.5rem";
-galleryCounter.style.fontWeight = "bold";
-galleryCounter.style.top = "1rem";
-galleryCounter.style.left = "2rem";
-galleryCounter.style.color = "whitesmoke";
-
 let galleryContents = [
-  galleryImage,
+  galleryCounter,
+  galleryMediaContainer,
   galleryButtonPrevious,
   galleryButtonNext,
   galleryButtonClose,
   galleryButtonPreviousPost,
-  galleryButtonNextPost,
-  galleryCounter
+  galleryButtonNextPost
 ];
 
 for (let item of galleryContents) {
@@ -171,26 +171,25 @@ function insertSpanElm(parentElm, spanContent) {
   return newSpan;
 }
 
-function changeImage(targetIndex) {
-  if ((targetIndex < 0) || (targetIndex > imageSrcAll.length - 1)) {
+function showMedia(index) {
+  if ((index < 0) || (index > mediaElmAll.length - 1)) {
     return;
   }
-  currentGalleryIndex = targetIndex;
-  galleryCounter.innerText = `${currentGalleryIndex + 1} / ${imageSrcAll.length}`;
-  galleryImage.src = imageSrcAll[targetIndex];
+  currentGalleryIndex = index;
+  galleryCounter.innerText = `${currentGalleryIndex + 1} / ${mediaElmAll.length}`;
+  let newMediaElm = mediaElmAll[index].cloneNode();
+  newMediaElm.style.maxHeight = "100%";
+  newMediaElm.style.maxWidth = "100%";
+  galleryMediaContainer.innerHTML = "";
+  galleryMediaContainer.appendChild(newMediaElm);
 }
 
 /**
  * TODO:
  *   Download button,
- *   Gallery toggle,
  *   Image Size (using elm.naturalHeight and elm.naturalWidth),
  *   Original size image,
- *   Video support,
- *   Hint for no-image,
- *   Image verticle center,
  *   100% for smaller image,
- *   Fix second "gallery=true" in URL,
  *   Fix auto open gallery when drop URL params,
  *   Add keyboard support
  */
