@@ -11,8 +11,10 @@
 
 let autoOpenGallery = getUrlParams("gallery"); // should be true or undefined.
 let imageElmAll = document.querySelectorAll("article img");
+if (!imageElmAll.length) { return }
+
 let imageSrcAll = new Array;
-let currentImageIndex = 0;
+let currentGalleryIndex = 0;
 
 for (let elm of imageElmAll) { imageSrcAll.push(elm.src) }
 
@@ -47,7 +49,7 @@ if (!autoOpenGallery) {
 }
 
 let galleryImage = document.createElement("img");
-galleryImage.src = imageSrcAll[currentImageIndex];
+galleryImage.src = imageSrcAll[currentGalleryIndex];
 galleryImage.style.maxHeight = "100%";
 galleryImage.style.maxWidth = "100%";
 
@@ -59,7 +61,7 @@ galleryButtonPrevious.style.top = "calc(50% - 5rem)";
 galleryButtonPrevious.style.left = "0";
 galleryButtonPrevious.style.padding = "3rem";
 galleryButtonPrevious.style.color = "whitesmoke";
-galleryButtonPrevious.onclick = () => { changeImage(currentImageIndex - 1) }
+galleryButtonPrevious.onclick = () => { changeImage(currentGalleryIndex - 1) }
 
 let galleryButtonNext = document.createElement("span");
 insertIconElm(galleryButtonNext, "fa fa-angle-right");
@@ -69,7 +71,7 @@ galleryButtonNext.style.top = "calc(50% - 5rem)";
 galleryButtonNext.style.right = "0";
 galleryButtonNext.style.padding = "3rem";
 galleryButtonNext.style.color = "whitesmoke";
-galleryButtonNext.onclick = () => { changeImage(currentImageIndex + 1) }
+galleryButtonNext.onclick = () => { changeImage(currentGalleryIndex + 1) }
 
 let galleryButtonClose = document.createElement("span");
 insertIconElm(galleryButtonClose, "fa fa-times");
@@ -119,7 +121,7 @@ if (document.querySelector(".bd_rd_next")) {
 }
 
 let galleryCounter = document.createElement("span");
-galleryCounter.innerText = `${currentImageIndex + 1} / ${imageSrcAll.length}`;
+galleryCounter.innerText = `${currentGalleryIndex + 1} / ${imageSrcAll.length}`;
 galleryCounter.style.position = "absolute";
 galleryCounter.style.fontSize = "1.5rem";
 galleryCounter.style.fontWeight = "bold";
@@ -151,7 +153,7 @@ function getUrlParams(key) {
 
 function addUrlParam(url, key, value) {
   let newUrl = new URL(url);
-  newUrl.searchParams.append(key, value);
+  newUrl.searchParams.set(key, value);
   return newUrl;
 }
 
@@ -173,8 +175,8 @@ function changeImage(targetIndex) {
   if ((targetIndex < 0) || (targetIndex > imageSrcAll.length - 1)) {
     return;
   }
-  currentImageIndex = targetIndex;
-  galleryCounter.innerText = `${currentImageIndex + 1} / ${imageSrcAll.length}`;
+  currentGalleryIndex = targetIndex;
+  galleryCounter.innerText = `${currentGalleryIndex + 1} / ${imageSrcAll.length}`;
   galleryImage.src = imageSrcAll[targetIndex];
 }
 
