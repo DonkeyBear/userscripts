@@ -1,13 +1,22 @@
 // ==UserScript==
 // @name         24Post Gallery
 // @namespace    https://github.com/DonkeyBear
-// @version      0.2
+// @version      0.3
 // @description  Gallery for 24Post
 // @author       DonkeyBear
 // @match        https://24post.co.kr/*/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=24post.co.kr
 // @grant        none
 // ==/UserScript==
+
+/**
+ * TODO:
+ *   Download button,
+ *   Image Size (using elm.naturalHeight and elm.naturalWidth),
+ *   Original size image,
+ *   100% for smaller image,
+ *   Fix auto open gallery when drop URL params
+ */
 
 let autoOpenGallery = getUrlParams("gallery"); // should be true or undefined.
 let imageElmAll = document.querySelectorAll("article img");
@@ -16,7 +25,7 @@ let mediaElmAll = [...imageElmAll, ...videoElmAll];
 if (!mediaElmAll.length) { return } // return when no image and video in current post.
 let currentGalleryIndex = 0;
 
-document.body.style.position = "unset";
+document.body.style.position = "unset"; // fix the weird gap around gallery.
 document.getElementById("new_notice_content_wrap").style.zIndex = "4999";
 
 let galleryLauncher = document.createElement("button");
@@ -30,7 +39,10 @@ galleryLauncher.style.bottom = "2rem";
 galleryLauncher.style.right = "2rem";
 galleryLauncher.style.zIndex = "4900";
 galleryLauncher.style.textAlign = "center";
-galleryLauncher.onclick = () => { galleryContainer.style.display = "block" }
+galleryLauncher.onclick = () => {
+  galleryContainer.style.display = "block";
+  document.addEventListener('keydown', galleryKeydownFunction);
+}
 
 let galleryContainer = document.createElement("div");
 galleryContainer.style.height = "100vh";
@@ -44,6 +56,8 @@ galleryContainer.style.zIndex = "5000";
 galleryContainer.style.textAlign = "center";
 if (!autoOpenGallery) {
   galleryContainer.style.display = "none";
+} else {
+  document.addEventListener('keydown', galleryKeydownFunction);
 }
 
 let galleryCounter = document.createElement("span");
@@ -89,7 +103,10 @@ galleryButtonClose.style.fontSize = "2rem";
 galleryButtonClose.style.top = ".75rem";
 galleryButtonClose.style.right = "2rem";
 galleryButtonClose.style.color = "whitesmoke";
-galleryButtonClose.onclick = () => { galleryContainer.style.display = "none" }
+galleryButtonClose.onclick = () => {
+  galleryContainer.style.display = "none";
+  document.removeEventListener('keydown', galleryKeydownFunction);
+}
 
 let galleryButtonPreviousPost = document.createElement("a");
 if (document.querySelector(".bd_rd_prev")) {
@@ -143,6 +160,16 @@ for (let item of galleryContents) {
   galleryContainer.appendChild(item);
 }
 
+document.addEventListener('keydown', (event) => {
+  if (event.code == "KeyG") {
+    let containerDisplay = galleryContainer.style.display;
+    if (containerDisplay == "none") {
+      galleryLauncher.click();
+    } else {
+      galleryButtonClose.click();
+    }
+  }
+});
 document.body.appendChild(galleryLauncher);
 document.body.appendChild(galleryContainer);
 
@@ -171,6 +198,23 @@ function insertSpanElm(parentElm, spanContent) {
   return newSpan;
 }
 
+function galleryKeydownFunction(event) {
+  switch (event.code) {
+    case "KeyK":
+      galleryButtonPreviousPost.click();
+      break;
+    case "KeyL":
+      galleryButtonNextPost.click();
+      break;
+    case "Comma":
+      galleryButtonPrevious.click();
+      break;
+    case "Period":
+      galleryButtonNext.click();
+      break;
+  }
+}
+
 function showMedia(index) {
   if ((index < 0) || (index > mediaElmAll.length - 1)) {
     return;
@@ -183,13 +227,3 @@ function showMedia(index) {
   galleryMediaContainer.innerHTML = "";
   galleryMediaContainer.appendChild(newMediaElm);
 }
-
-/**
- * TODO:
- *   Download button,
- *   Image Size (using elm.naturalHeight and elm.naturalWidth),
- *   Original size image,
- *   100% for smaller image,
- *   Fix auto open gallery when drop URL params,
- *   Add keyboard support
- */
