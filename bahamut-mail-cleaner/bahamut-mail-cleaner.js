@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         巴哈姆特站內信——刪信幫手
+// @name         巴哈姆特刪信幫手
 // @namespace    https://github.com/DonkeyBear
 // @version      0.1
 // @description  一鍵刪除惱人的「動畫瘋獲獎通知」
