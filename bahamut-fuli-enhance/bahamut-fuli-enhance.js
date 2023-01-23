@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         巴哈姆特勇者福利社++
 // @namespace    https://github.com/DonkeyBear
-// @version      0.2
+// @version      0.2fix
 // @description  改進巴哈姆特的勇者福利社，一次顯示全部商品，並加入過濾隱藏功能。
 // @author       DonkeyBear
 // @match        https://fuli.gamer.com.tw/shop.php*
@@ -62,8 +62,8 @@ setupButton("隱藏抽獎類", "抽獎", "hide-lottery-items");
 /* 動態載入全部商品 */
 // 依照 URL Param 判斷是否執行
 let newUrl = new URL(window.location);
-if (newUrl.searchParams.get("history") != "0" || newUrl.searchParams.get("history") != null) { return }
-if (newUrl.searchParams.get("page") != "1" || newUrl.searchParams.get("page") != null) { return }
+if (newUrl.searchParams.get("history") != "0" && newUrl.searchParams.get("history") != null) { return }
+if (newUrl.searchParams.get("page") != "1" && newUrl.searchParams.get("page") != null) { return }
 
 document.getElementById("BH-pagebtn").style.display = "none"; // 隱藏選頁按鈕區塊
 let itemListBox = document.querySelector(".item-list-box");
