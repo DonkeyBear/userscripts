@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         巴哈姆特勇者福利社++
 // @namespace    https://github.com/DonkeyBear
-// @version      0.1
+// @version      0.2
 // @description  改進巴哈姆特的勇者福利社，一次顯示全部商品，並加入過濾隱藏功能。
 // @author       DonkeyBear
 // @match        https://fuli.gamer.com.tw/shop.php*
@@ -60,14 +60,19 @@ setupButton("隱藏競標類", "競標", "hide-bid-items");
 setupButton("隱藏抽獎類", "抽獎", "hide-lottery-items");
 
 /* 動態載入全部商品 */
+// 依照 URL Param 判斷是否執行
+let newUrl = new URL(window.location);
+if (newUrl.searchParams.get("history") != "0" || newUrl.searchParams.get("history") != null) { return }
+if (newUrl.searchParams.get("page") != "1" || newUrl.searchParams.get("page") != null) { return }
+
 document.getElementById("BH-pagebtn").style.display = "none"; // 隱藏選頁按鈕區塊
 let itemListBox = document.querySelector(".item-list-box");
 let maxPage = document.querySelector(".BH-pagebtnA a:last-child").innerText;
-if (maxPage == "1") { return }
+if (maxPage == "1") { return } // 若僅一頁則不需讀取
 for (let page = 2; page <= maxPage; page++) {
   let xhr = new XMLHttpRequest();
-  let xhrURL = `https://fuli.gamer.com.tw/shop.php?page=${page}&history=0`;
-  xhr.open("GET", xhrURL, true);
+  let xhrUrl = `https://fuli.gamer.com.tw/shop.php?page=${page}&history=0`;
+  xhr.open("GET", xhrUrl, true);
   xhr.send();
   xhr.onreadystatechange = function () {
     if (this.readyState === 4 && (this.statusText === "OK" || this.status === 200)) {
