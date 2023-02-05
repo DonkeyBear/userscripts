@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         巴哈姆特勇者福利社++
 // @namespace    https://github.com/DonkeyBear
-// @version      0.4
+// @version      0.5.0
 // @description  改進巴哈姆特的勇者福利社，一次顯示全部商品，並加入過濾隱藏功能。
 // @author       DonkeyBear
 // @match        https://fuli.gamer.com.tw/shop.php*
@@ -39,9 +39,8 @@ function setupButton(labelText, keywordToHide, checkboxId) {
 function toggleItemCards(keywaord, hide) {
   let cards = document.querySelectorAll("a.items-card");
   let styleDisplayString = "";
-  if (hide) {
-    styleDisplayString = "none";
-  }
+
+  if (hide) { styleDisplayString = "none" }
 
   for (let card of cards) {
     if (card.querySelector(".type-tag").innerText.includes(keywaord)) {
@@ -106,9 +105,9 @@ for (let page = 2; page <= maxPage; page++) {
       for (let item of items) { itemListBox.appendChild(item); }
 
       // 更新計數器
-      exchangeItemCounter.innerText = countItemCards("兌換");
+      exchangeItemCounter.innerText = countItemCards("直購");
       bidItemCounter.innerText = countItemCards("競標");
-      lotteryItemCounter.innerText = countItemCards("抽獎");
+      lotteryItemCounter.innerText = countItemCards("抽抽樂");
     }
   }
 }
