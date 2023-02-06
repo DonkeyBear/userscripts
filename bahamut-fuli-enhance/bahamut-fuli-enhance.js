@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         巴哈姆特勇者福利社++
 // @namespace    https://github.com/DonkeyBear
-// @version      0.7.0
+// @version      0.7.1
 // @description  改進巴哈姆特的勇者福利社，動態載入全部商品、加入過濾隱藏功能、標示競標目前出價等。
 // @author       DonkeyBear
 // @match        https://fuli.gamer.com.tw/shop.php*
@@ -149,7 +149,7 @@ const observer = new MutationObserver((record) => {
         lotteryItemCounter.innerText++;
         break;
     }
-    colorPriceTag(card); // 若價格高於存款，將價格標為紅色
+    colorPriceTag(newNode); // 若價格高於存款，將價格標為紅色
   }
 });
 observer.observe(document.querySelector(".item-list-box"), { childList: true });
