@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         巴哈姆特勇者福利社++
 // @namespace    https://github.com/DonkeyBear
-// @version      0.6.0
+// @version      0.7.0
 // @description  改進巴哈姆特的勇者福利社，動態載入全部商品、加入過濾隱藏功能、標示競標目前出價等。
 // @author       DonkeyBear
 // @match        https://fuli.gamer.com.tw/shop.php*
@@ -19,7 +19,10 @@ if (newUrl.searchParams.get("page") != "1" && newUrl.searchParams.get("page") !=
   window.location.replace("https://fuli.gamer.com.tw/shop.php");
 }
 
-// ".items-card .type-tag" 的內文
+// 持有的巴幣存款
+const DEPOSIT = Number(document.querySelector(".brave-assets").innerText.replaceAll(/\D/, ""));
+
+// .items-card .type-tag 的內文
 const TYPE_TAG = {
   exchange: "直購",
   bid: "競標",
@@ -46,25 +49,12 @@ function setupButton(labelText, keywordToHide, checkboxId) {
 function toggleItemCards(keywaord, hide) {
   let cards = document.querySelectorAll("a.items-card");
   let styleDisplayString = "";
-
   if (hide) { styleDisplayString = "none" }
-
   for (let card of cards) {
     if (card.querySelector(".type-tag").innerText.includes(keywaord)) {
       card.style.display = styleDisplayString;
     }
   }
-}
-
-function countItemCards(keywaord) {
-  let counter = 0;
-  let cards = document.querySelectorAll("a.items-card");
-  for (let card of cards) {
-    if (card.querySelector(".type-tag").innerText.includes(keywaord)) {
-      counter++;
-    }
-  }
-  return counter;
 }
 
 function getCurrentBid(itemsCardElement) {
@@ -86,8 +76,15 @@ function getCurrentBid(itemsCardElement) {
       }
       let newTextHTML = /* html */`目前出價<p class="digital" style="margin-left:8px">${currentBid}</p>巴幣`;
       itemsCardElement.querySelector(".price").innerHTML = newTextHTML;
+      colorPriceTag(itemsCardElement);
     }
   }
+}
+
+function colorPriceTag(itemsCardElement) {
+  let priceElement = itemsCardElement.querySelector(".digital")
+  let price = Number(priceElement.innerText.replaceAll(/\D/, ""));
+  if (DEPOSIT < price) { priceElement.style.color = "#DF4747" }
 }
 
 /* 放置功能按鈕 */
@@ -101,23 +98,34 @@ document.querySelector("#forum-lastBoard").insertAdjacentHTML("afterend", /* htm
     <h5>現有商品數量</h5>
     <div class="BH-rbox flex-center">
       <span>兌換類：</span>
-      <span id="exchange-item-counter" style="color:#11AAC1;margin-right:.75rem"></span>
+      <span id="exchange-item-counter" style="color:#11AAC1;margin-right:.75rem">0</span>
       <span>競標類：</span>
-      <span id="bid-item-counter" style="color:#11AAC1;margin-right:.75rem"></span>
+      <span id="bid-item-counter" style="color:#11AAC1;margin-right:.75rem">0</span>
       <span>抽獎類：</span>
-      <span id="lottery-item-counter" style="color:#11AAC1"></span>
+      <span id="lottery-item-counter" style="color:#11AAC1">0</span>
     </div>
   </div>
 `);
 let exchangeItemCounter = document.getElementById("exchange-item-counter");
 let bidItemCounter = document.getElementById("bid-item-counter");
 let lotteryItemCounter = document.getElementById("lottery-item-counter");
-exchangeItemCounter.innerText = countItemCards(TYPE_TAG.exchange);
-bidItemCounter.innerText = countItemCards(TYPE_TAG.bid);
-lotteryItemCounter.innerText = countItemCards(TYPE_TAG.lottery);
 
-/* 取得競標類商品的目前出價並標示於商品卡 */
-for (let card of document.querySelectorAll("a.items-card")) { getCurrentBid(card) }
+for (let card of document.querySelectorAll("a.items-card")) {
+  // 依照商品卡種類，增加計數和取得目前出價
+  switch (card.querySelector(".type-tag").innerText.trim()) {
+    case TYPE_TAG.exchange:
+      exchangeItemCounter.innerText++;
+      break;
+    case TYPE_TAG.bid:
+      bidItemCounter.innerText++;
+      getCurrentBid(card); // 取得競標類商品的目前出價並標示於商品卡
+      break;
+    case TYPE_TAG.lottery:
+      lotteryItemCounter.innerText++;
+      break;
+  }
+  colorPriceTag(card); // 若價格高於存款，將價格標為紅色
+}
 
 /* 動態載入全部商品 */
 document.getElementById("BH-pagebtn").style.display = "none"; // 隱藏選頁按鈕區塊
@@ -135,12 +143,13 @@ const observer = new MutationObserver((record) => {
         break;
       case TYPE_TAG.bid:
         bidItemCounter.innerText++;
-        getCurrentBid(newNode);
+        getCurrentBid(newNode); // 取得競標類商品的目前出價並標示於商品卡
         break;
       case TYPE_TAG.lottery:
         lotteryItemCounter.innerText++;
         break;
     }
+    colorPriceTag(card); // 若價格高於存款，將價格標為紅色
   }
 });
 observer.observe(document.querySelector(".item-list-box"), { childList: true });
