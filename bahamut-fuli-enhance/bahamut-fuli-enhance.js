@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         巴哈姆特勇者福利社++
 // @namespace    https://github.com/DonkeyBear
-// @version      0.7.1
+// @version      0.7.2
 // @description  改進巴哈姆特的勇者福利社，動態載入全部商品、加入過濾隱藏功能、標示競標目前出價等。
 // @author       DonkeyBear
 // @match        https://fuli.gamer.com.tw/shop.php*
@@ -132,24 +132,26 @@ document.getElementById("BH-pagebtn").style.display = "none"; // 隱藏選頁按
 let itemListBox = document.querySelector(".item-list-box");
 let maxPage = document.querySelector(".BH-pagebtnA a:last-child").innerText;
 if (maxPage == "1") { return } // 若僅一頁則不需讀取
-const observer = new MutationObserver((record) => {
+const observer = new MutationObserver((records) => {
   // 建立觀測器，觀測新加入的商品卡
-  for (let newNode of record.addedNodes) {
-    if (!newNode.classList.contains("items-card")) { continue }
-    // 依照商品卡種類，增加計數和取得目前出價
-    switch (newNode.querySelector(".type-tag").innerText.trim()) {
-      case TYPE_TAG.exchange:
-        exchangeItemCounter.innerText++;
-        break;
-      case TYPE_TAG.bid:
-        bidItemCounter.innerText++;
-        getCurrentBid(newNode); // 取得競標類商品的目前出價並標示於商品卡
-        break;
-      case TYPE_TAG.lottery:
-        lotteryItemCounter.innerText++;
-        break;
+  for (let record of records) {
+    for (let newNode of record.addedNodes) {
+      if (!newNode.classList.contains("items-card")) { continue }
+      // 依照商品卡種類，增加計數和取得目前出價
+      switch (newNode.querySelector(".type-tag").innerText.trim()) {
+        case TYPE_TAG.exchange:
+          exchangeItemCounter.innerText++;
+          break;
+        case TYPE_TAG.bid:
+          bidItemCounter.innerText++;
+          getCurrentBid(newNode); // 取得競標類商品的目前出價並標示於商品卡
+          break;
+        case TYPE_TAG.lottery:
+          lotteryItemCounter.innerText++;
+          break;
+      }
+      colorPriceTag(newNode); // 若價格高於存款，將價格標為紅色
     }
-    colorPriceTag(newNode); // 若價格高於存款，將價格標為紅色
   }
 });
 observer.observe(document.querySelector(".item-list-box"), { childList: true });
