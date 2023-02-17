@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Master Duel Meta - Screenshot for Deck Builder
 // @namespace    https://github.com/DonkeyBear
-// @version      0.2.0
+// @version      0.2.1
 // @description  Take a nice shot of your deck!
 // @author       DonkeyBear
 // @match        http://www.masterduelmeta.com/deck-tester*
@@ -29,7 +29,9 @@ const stylesheet = /* css */`
     background-color: rgba(0, 0, 0, .5);
     backdrop-filter: blur(3px);
     z-index: 999;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .info-container {
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
