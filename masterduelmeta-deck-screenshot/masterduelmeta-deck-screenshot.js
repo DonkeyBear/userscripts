@@ -1,17 +1,18 @@
 // ==UserScript==
 // @name         Master Duel Meta - Screenshot for Deck Builder
 // @namespace    https://github.com/DonkeyBear
-// @version      0.1
+// @version      0.2.0
 // @description  Take a nice shot of your deck!
 // @author       DonkeyBear
-// @match        https://www.masterduelmeta.com/deck-tester
+// @match        http://www.masterduelmeta.com/deck-tester*
+// @match        https://www.masterduelmeta.com/deck-tester*
 // @icon         https://s3.duellinksmeta.com/img/icons/favicon-32x32.png
 // @require      https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js
 // @grant        none
 // ==/UserScript==
 
 const stylesheet = /* css */`
-  .d-none {
+  .deck-container.taking-shot .new-card, .deck-container.taking-shot .adjust-buttons-container {
     display: none !important;
   }
   .screenshot {
@@ -35,6 +36,9 @@ const stylesheet = /* css */`
     font-size: .75em;
     font-weight: 500;
   }
+  .info-container .slot-info {
+    color: white;
+  }
   .slot-info, .card-count {
     flex-basis: auto !important;
   }
@@ -57,15 +61,15 @@ const stylesheet = /* css */`
     background: linear-gradient(90deg, #4f494b 0%, #969696 100%);
   }
 `;
-const style = document.createElement("style");
+const style = document.createElement('style');
 style.innerHTML = stylesheet;
 document.head.appendChild(style);
 
 // Append screenshot button
-const tabButtonContainer = document.querySelector("ul.svelte-umfxo");
-const newTabButton = document.createElement("li");
-newTabButton.classList.add("svelte-umfxo", "screenshot-button");
-newTabButton.innerText = "Screenshot";
+const tabButtonContainer = document.querySelector('ul.svelte-umfxo');
+const newTabButton = document.createElement('li');
+newTabButton.classList.add('svelte-umfxo', 'screenshot-button');
+newTabButton.innerText = 'Screenshot';
 newTabButton.onclick = () => { takeshot() }
 tabButtonContainer.appendChild(newTabButton);
 
@@ -73,7 +77,7 @@ const observer = {};
 
 // Append screenshot button again if it's removed
 observer.tabButtonContainer = new MutationObserver(() => {
-  if (!tabButtonContainer.querySelector(".screenshot-button")) {
+  if (!tabButtonContainer.querySelector('.screenshot-button')) {
     tabButtonContainer.appendChild(newTabButton);
   }
 })
@@ -83,42 +87,36 @@ observer.tabButtonContainer.observe(tabButtonContainer, { childList: true });
 observer.mainDeck = new MutationObserver(() => { countCards() });
 observer.extraDeck = new MutationObserver(() => { countCards() });
 observer.deckContainer = new MutationObserver(() => {
-  const mainDeck = document.querySelector(".deck-container > .box-container");
-  const extraDeck = document.querySelector(".extra-side-deck");
+  const mainDeck = document.querySelector('.deck-container > .box-container');
+  const extraDeck = document.querySelector('.extra-side-deck');
   if (mainDeck) { observer.mainDeck.observe(mainDeck, { childList: true, subtree: true, attributes: true }) }
   if (extraDeck) { observer.extraDeck.observe(extraDeck, { childList: true, subtree: true, attributes: true }) }
   if (mainDeck && mainDeck) { observer.deckContainer.disconnect() }
 });
-observer.deckContainer.observe(document.querySelector(".deck-container"), { childList: true });
-
-function toggleElements() {
-  for (let element of document.querySelectorAll(".deck-container .adjust-buttons-container")) {
-    element.classList.toggle("d-none");
-  }
-}
+observer.deckContainer.observe(document.querySelector('.deck-container'), { childList: true });
 
 function takeshot() {
-  const deckContainer = document.querySelector(".deck-container");
+  const deckContainer = document.querySelector('.deck-container');
 
-  toggleElements();
+  deckContainer.classList.add('taking-shot');
 
-  const overlay = document.createElement("div");
-  overlay.classList.add("overlay");
+  const overlay = document.createElement('div');
+  overlay.classList.add('overlay');
   overlay.onclick = () => { overlay.remove() }
   document.body.appendChild(overlay);
 
   const options = {
     allowTaint: false,
     useCORS: true,
-    backgroundColor: "#001b35", // Background color of <body>
+    backgroundColor: '#001b35', // Background color of <body>
     logging: false
   }
-  html2canvas(deckContainer.parentElement, options).then((canvas) => {
-    canvas.classList.add("screenshot");
+  html2canvas(deckContainer.parentElement, options).then(canvas => {
+    canvas.classList.add('screenshot');
     overlay.appendChild(canvas);
   });
 
-  toggleElements();
+  deckContainer.classList.remove('taking-shot');
 }
 
 function countCards() {
@@ -131,28 +129,27 @@ function countCards() {
     n: 0
   }
 
-  const mainDeckCards = document.querySelectorAll(".deck-container > .box-container .card:not(.background)");
-  const extraDeckCards = document.querySelectorAll(".extra-side-deck .card:not(.background)");
+  const mainDeckCards = document.querySelectorAll('.deck-container > .box-container > .card-container > .card');
+  const extraDeckCards = document.querySelectorAll('.extra-side-deck .card-container > .card');
 
   for (let cards of [mainDeckCards, extraDeckCards]) {
     for (let card of cards) {
       let copies = 1;
-      if (card.querySelector("[alt='2 copies']")) { copies = 2 }
-      else if (card.querySelector("[alt='3 copies']")) { copies = 3 }
+      if (card.querySelector('[alt="2 copies"]')) { copies = 2 }
+      else if (card.querySelector('[alt="3 copies"]')) { copies = 3 }
 
       if (cards == mainDeckCards) { counter.main += copies }
       else if (cards == extraDeckCards) { counter.extra += copies }
 
-      if (card.querySelector("[alt='UR Rarity']")) { counter.ur += copies }
-      else if (card.querySelector("[alt='SR Rarity']")) { counter.sr += copies }
-      else if (card.querySelector("[alt='R Rarity']")) { counter.r += copies }
-      else if (card.querySelector("[alt='N Rarity']")) { counter.n += copies }
+      if (card.querySelector('[alt="UR Rarity"]')) { counter.ur += copies }
+      else if (card.querySelector('[alt="SR Rarity"]')) { counter.sr += copies }
+      else if (card.querySelector('[alt="R Rarity"]')) { counter.r += copies }
+      else if (card.querySelector('[alt="N Rarity"]')) { counter.n += copies }
     }
   }
 
-  const infoLeft = document.querySelector(".info-container .slot-info");
-  const infoRight = document.querySelector(".info-container .card-count");
-  infoLeft.style.cssText = "color: white";
+  const infoLeft = document.querySelector('.info-container .slot-info');
+  const infoRight = document.querySelector('.info-container .card-count');
   infoLeft.innerHTML = /* html */`
     <span class="tag rarity-ur">${counter.ur} UR</span>
     <span class="tag rarity-sr">${counter.sr} SR</span>
