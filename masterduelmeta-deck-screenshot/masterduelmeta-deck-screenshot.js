@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Master Duel Meta - Screenshot for Deck Builder
 // @namespace    https://github.com/DonkeyBear
-// @version      0.2.4
+// @version      0.2.5
 // @description  Take a nice shot of your deck!
 // @author       DonkeyBear
 // @match        http://www.masterduelmeta.com/deck-tester*
@@ -64,7 +64,7 @@ const stylesheet = /* css */`
   }
 `;
 const style = document.createElement('style');
-style.innerHTML = stylesheet;
+style.textContent = stylesheet;
 document.head.appendChild(style);
 
 // Append screenshot button
@@ -74,6 +74,8 @@ newTabButton.classList.add('svelte-umfxo', 'screenshot-button');
 newTabButton.textContent = 'Screenshot';
 newTabButton.onclick = () => { takeshot() };
 tabButtonContainer.appendChild(newTabButton);
+
+countCards();
 
 const observer = {};
 
@@ -89,6 +91,8 @@ observer.tabButtonContainer.observe(tabButtonContainer, { childList: true });
 observer.mainDeck = new MutationObserver(() => { countCards() });
 observer.extraDeck = new MutationObserver(() => { countCards() });
 observer.deckContainer = new MutationObserver(() => {
+  // Append count-info again if it's removed
+  if (document.querySelector('.deck-container > .info-container').textContent.includes('cards')) { countCards() }
   const mainDeck = document.querySelector('.deck-container > .box-container');
   const extraDeck = document.querySelector('.extra-side-deck');
   if (mainDeck) { observer.mainDeck.observe(mainDeck, { childList: true, subtree: true, attributes: true }) }
@@ -136,6 +140,8 @@ function countCards () {
 
   for (const cards of [mainDeckCards, extraDeckCards]) {
     for (const card of cards) {
+      if (!card.querySelector('img')) { break }
+
       let copies;
       const cardAmount = card.querySelector('img.card-amount');
       if (!cardAmount) {
@@ -148,8 +154,9 @@ function countCards () {
 
       cards === mainDeckCards ? counter.main += copies : counter.extra += copies;
 
-      const rarityImageAlt = card.querySelector('.rarity-image > img').alt;
-      switch (rarityImageAlt) {
+      const rarityImage = card.querySelector('.rarity-image > img');
+      if (!rarityImage) { break }
+      switch (rarityImage.alt) {
         case 'UR Rarity':
           counter.ur += copies;
           break;
