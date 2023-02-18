@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Master Duel Meta - Screenshot for Deck Builder
 // @namespace    https://github.com/DonkeyBear
-// @version      0.2.5
+// @version      0.2.6
 // @description  Take a nice shot of your deck!
 // @author       DonkeyBear
 // @match        http://www.masterduelmeta.com/deck-tester*
@@ -12,7 +12,7 @@
 // ==/UserScript==
 
 const stylesheet = /* css */`
-  .deck-container.taking-shot .new-card, .deck-container.taking-shot .adjust-buttons-container {
+  .deck-container.taking-shot .new-card, .deck-container.taking-shot .adjust-buttons-container, .search-container.taking-shot {
     display: none !important;
   }
   .screenshot {
@@ -103,8 +103,10 @@ observer.deckContainer.observe(document.querySelector('.deck-container'), { chil
 
 function takeshot () {
   const deckContainer = document.querySelector('.deck-container');
+  const searchContainer = document.querySelector('.search-container');
 
   deckContainer.classList.add('taking-shot');
+  searchContainer.classList.add('taking-shot');
 
   const overlay = document.createElement('div');
   overlay.classList.add('overlay');
@@ -123,6 +125,7 @@ function takeshot () {
   });
 
   deckContainer.classList.remove('taking-shot');
+  searchContainer.classList.remove('taking-shot');
 }
 
 function countCards () {
