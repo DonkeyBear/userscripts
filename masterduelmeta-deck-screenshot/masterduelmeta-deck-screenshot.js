@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Master Duel Meta - Screenshot for Deck Builder
 // @namespace    https://github.com/DonkeyBear
-// @version      0.2.3
+// @version      0.2.4
 // @description  Take a nice shot of your deck!
 // @author       DonkeyBear
 // @match        http://www.masterduelmeta.com/deck-tester*
@@ -71,7 +71,7 @@ document.head.appendChild(style);
 const tabButtonContainer = document.querySelector('ul.svelte-umfxo');
 const newTabButton = document.createElement('li');
 newTabButton.classList.add('svelte-umfxo', 'screenshot-button');
-newTabButton.innerText = 'Screenshot';
+newTabButton.textContent = 'Screenshot';
 newTabButton.onclick = () => { takeshot() };
 tabButtonContainer.appendChild(newTabButton);
 
@@ -137,24 +137,30 @@ function countCards () {
   for (const cards of [mainDeckCards, extraDeckCards]) {
     for (const card of cards) {
       let copies;
-      if (card.querySelector('[alt="3 copies"]')) {
-        copies = 3;
-      } else if (card.querySelector('[alt="2 copies"]')) {
-        copies = 2;
-      } else {
+      const cardAmount = card.querySelector('img.card-amount');
+      if (!cardAmount) {
         copies = 1;
+      } else if (cardAmount.alt.includes('2')) {
+        copies = 2;
+      } else if (cardAmount.alt.includes('3')) {
+        copies = 3;
       }
 
       cards === mainDeckCards ? counter.main += copies : counter.extra += copies;
 
-      if (card.querySelector('[alt="UR Rarity"]')) {
-        counter.ur += copies;
-      } else if (card.querySelector('[alt="SR Rarity"]')) {
-        counter.sr += copies;
-      } else if (card.querySelector('[alt="R Rarity"]')) {
-        counter.r += copies;
-      } else if (card.querySelector('[alt="N Rarity"]')) {
-        counter.n += copies;
+      const rarityImageAlt = card.querySelector('.rarity-image > img').alt;
+      switch (rarityImageAlt) {
+        case 'UR Rarity':
+          counter.ur += copies;
+          break;
+        case 'SR Rarity':
+          counter.sr += copies;
+          break;
+        case 'R Rarity':
+          counter.r += copies;
+          break;
+        case 'N Rarity':
+          counter.n += copies;
       }
     }
   }
@@ -167,5 +173,5 @@ function countCards () {
     <span class="tag rarity-r">${counter.r} R</span>
     <span class="tag rarity-n">${counter.n} N</span>
   `;
-  infoRight.innerText = `Main: ${counter.main} Extra: ${counter.extra}`;
+  infoRight.textContent = `Main: ${counter.main} Extra: ${counter.extra}`;
 }
