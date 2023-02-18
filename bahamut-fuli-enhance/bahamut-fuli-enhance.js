@@ -1,15 +1,13 @@
 // ==UserScript==
 // @name         巴哈姆特勇者福利社++
 // @namespace    https://github.com/DonkeyBear
-// @version      0.7.4
+// @version      0.7.5
 // @description  改進巴哈姆特的勇者福利社，動態載入全部商品、加入過濾隱藏功能、標示競標目前出價等。
 // @author       DonkeyBear
 // @match        https://fuli.gamer.com.tw/shop.php*
 // @icon         https://fuli.gamer.com.tw/favicon.ico
 // @grant        none
 // ==/UserScript==
-
-/* eslint semi: ["error", "always"] */
 
 const stylesheet = /* css */`
   .tabs-btn-box {
@@ -34,7 +32,7 @@ document.head.appendChild(style);
 
 // 依照 URL Param 判斷是否執行後續程式
 const newUrl = new URL(window.location);
-if (newUrl.searchParams.get('history') !== '0' && newUrl.searchParams.get('history') != null) { return; }
+if (newUrl.searchParams.get('history') !== '0' && newUrl.searchParams.get('history') != null) { return }
 if (newUrl.searchParams.get('page') !== '1' && newUrl.searchParams.get('page') != null) {
   window.location.replace('https://fuli.gamer.com.tw/shop.php');
 }
@@ -55,7 +53,7 @@ function setupButton (labelText, keywordToHide, checkboxId) {
   const newCheckbox = document.createElement('input');
   newCheckbox.id = checkboxId;
   newCheckbox.type = 'checkbox';
-  newCheckbox.onchange = (e) => { toggleItemCards(keywordToHide, e.target.checked); };
+  newCheckbox.onchange = (e) => { toggleItemCards(keywordToHide, e.target.checked) };
   const newLabel = document.createElement('label');
   newLabel.setAttribute('for', checkboxId);
   newLabel.innerText = labelText;
@@ -74,7 +72,7 @@ function toggleItemCards (keywaord, hide) {
 }
 
 function getCurrentBid (itemsCardElement) {
-  if (itemsCardElement.querySelector('.type-tag').innerText !== TYPE_TAG.bid) { return; } // 若非競標品則結束函式
+  if (itemsCardElement.querySelector('.type-tag').innerText !== TYPE_TAG.bid) { return } // 若非競標品則結束函式
   fetch(itemsCardElement.href, { method: 'GET' })
     .then(res => res.text())
     .then(data => {
@@ -83,7 +81,7 @@ function getCurrentBid (itemsCardElement) {
 
       let currentBid;
       for (const item of virtualDoc.querySelectorAll('.pbox-content')) {
-        if (!item.innerText.includes('目前出價')) { continue; }
+        if (!item.innerText.includes('目前出價')) { continue }
         currentBid = item.querySelector('.pbox-content-r').innerText.match(/[\d|,]+/)[0];
         break;
       }
@@ -96,7 +94,7 @@ function getCurrentBid (itemsCardElement) {
 function colorPriceTag (itemsCardElement) {
   const priceElement = itemsCardElement.querySelector('.digital');
   const price = Number(priceElement.innerText.replaceAll(/\D/, ''));
-  if (DEPOSIT < price) { priceElement.classList.add('unaffordable'); }
+  if (DEPOSIT < price) { priceElement.classList.add('unaffordable') }
 }
 
 /* 放置功能按鈕 */
@@ -142,12 +140,12 @@ for (const card of document.querySelectorAll('a.items-card')) {
 /* 動態載入全部商品 */
 const itemListBox = document.querySelector('.item-list-box');
 const maxPage = document.querySelector('.BH-pagebtnA a:last-child').innerText;
-if (maxPage === '1') { return; } // 若僅一頁則不需讀取
+if (maxPage === '1') { return } // 若僅一頁則不需讀取
 const observer = new MutationObserver((records) => {
   // 建立觀測器，觀測新加入的商品卡
   for (const record of records) {
     for (const newNode of record.addedNodes) {
-      if (!newNode.classList.contains('items-card')) { continue; }
+      if (!newNode.classList.contains('items-card')) { continue }
       // 依照商品卡種類，增加計數和取得目前出價
       switch (newNode.querySelector('.type-tag').innerText.trim()) {
         case TYPE_TAG.exchange:
@@ -175,6 +173,6 @@ for (let page = 2; page <= maxPage; page++) {
       const virtualDoc = parser.parseFromString(data, 'text/html');
 
       const items = virtualDoc.querySelectorAll('.item-list-box a.items-card');
-      for (const item of items) { itemListBox.appendChild(item); }
+      for (const item of items) { itemListBox.appendChild(item) }
     });
 }
