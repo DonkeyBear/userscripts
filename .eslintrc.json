@@ -4,12 +4,18 @@
         "es2021": true
     },
     "extends": "standard",
-    "overrides": [
-    ],
+    "overrides": [],
     "parserOptions": {
         "ecmaVersion": "latest",
         "sourceType": "script"
     },
     "rules": {
+        "semi": [
+            "error",
+            "always",
+            {
+                "omitLastInOneLineBlock": true
+            }
+        ]
     }
 }
