@@ -59,14 +59,11 @@ function toggleItemCards(keywaord, hide) {
 
 function getCurrentBid(itemsCardElement) {
   if (itemsCardElement.querySelector('.type-tag').innerText != TYPE_TAG.bid) { return } // 若非競標品則結束函式
-  let xhr = new XMLHttpRequest();
-  let xhrUrl = itemsCardElement.href;
-  xhr.open("GET", xhrUrl);
-  xhr.send();
-  xhr.onreadystatechange = function () {
-    if (this.readyState == 4 && (this.statusText == "OK" || this.status == 200)) {
+  fetch(itemsCardElement.href, { method: "GET" })
+    .then(res => res.text())
+    .then(data => {
       let parser = new DOMParser();
-      let virtualDoc = parser.parseFromString(this.responseText, 'text/html');
+      let virtualDoc = parser.parseFromString(data, 'text/html');
 
       let currentBid;
       for (let item of virtualDoc.querySelectorAll('.pbox-content')) {
@@ -77,8 +74,7 @@ function getCurrentBid(itemsCardElement) {
       let newTextHTML = /* html */`目前出價<p class="digital" style="margin-left:8px">${currentBid}</p>巴幣`;
       itemsCardElement.querySelector(".price").innerHTML = newTextHTML;
       colorPriceTag(itemsCardElement);
-    }
-  }
+    });
 }
 
 function colorPriceTag(itemsCardElement) {
@@ -155,18 +151,15 @@ const observer = new MutationObserver((records) => {
   }
 });
 observer.observe(document.querySelector(".item-list-box"), { childList: true });
+
 for (let page = 2; page <= maxPage; page++) {
-  let xhr = new XMLHttpRequest();
-  let xhrUrl = `https://fuli.gamer.com.tw/shop.php?page=${page}`;
-  xhr.open("GET", xhrUrl);
-  xhr.send();
-  xhr.onreadystatechange = function () {
-    if (this.readyState == 4 && (this.statusText == "OK" || this.status == 200)) {
+  fetch(`https://fuli.gamer.com.tw/shop.php?page=${page}`, { method: "GET" })
+    .then(res => res.text())
+    .then(data => {
       let parser = new DOMParser();
-      let virtualDoc = parser.parseFromString(this.responseText, 'text/html');
+      let virtualDoc = parser.parseFromString(data, 'text/html');
 
       let items = virtualDoc.querySelectorAll(".item-list-box a.items-card");
       for (let item of items) { itemListBox.appendChild(item) }
-    }
-  }
+    });
 }
