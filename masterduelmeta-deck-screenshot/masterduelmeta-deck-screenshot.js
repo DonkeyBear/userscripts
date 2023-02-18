@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Master Duel Meta - Screenshot for Deck Builder
 // @namespace    https://github.com/DonkeyBear
-// @version      0.2.2
+// @version      0.2.3
 // @description  Take a nice shot of your deck!
 // @author       DonkeyBear
 // @match        http://www.masterduelmeta.com/deck-tester*
@@ -10,8 +10,6 @@
 // @require      https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js
 // @grant        none
 // ==/UserScript==
-
-/* eslint semi: ["error", "always"] */
 
 const stylesheet = /* css */`
   .deck-container.taking-shot .new-card, .deck-container.taking-shot .adjust-buttons-container {
@@ -74,7 +72,7 @@ const tabButtonContainer = document.querySelector('ul.svelte-umfxo');
 const newTabButton = document.createElement('li');
 newTabButton.classList.add('svelte-umfxo', 'screenshot-button');
 newTabButton.innerText = 'Screenshot';
-newTabButton.onclick = () => { takeshot(); };
+newTabButton.onclick = () => { takeshot() };
 tabButtonContainer.appendChild(newTabButton);
 
 const observer = {};
@@ -88,14 +86,14 @@ observer.tabButtonContainer = new MutationObserver(() => {
 observer.tabButtonContainer.observe(tabButtonContainer, { childList: true });
 
 // Count cards and print
-observer.mainDeck = new MutationObserver(() => { countCards(); });
-observer.extraDeck = new MutationObserver(() => { countCards(); });
+observer.mainDeck = new MutationObserver(() => { countCards() });
+observer.extraDeck = new MutationObserver(() => { countCards() });
 observer.deckContainer = new MutationObserver(() => {
   const mainDeck = document.querySelector('.deck-container > .box-container');
   const extraDeck = document.querySelector('.extra-side-deck');
-  if (mainDeck) { observer.mainDeck.observe(mainDeck, { childList: true, subtree: true, attributes: true }); }
-  if (extraDeck) { observer.extraDeck.observe(extraDeck, { childList: true, subtree: true, attributes: true }); }
-  if (mainDeck && mainDeck) { observer.deckContainer.disconnect(); }
+  if (mainDeck) { observer.mainDeck.observe(mainDeck, { childList: true, subtree: true, attributes: true }) }
+  if (extraDeck) { observer.extraDeck.observe(extraDeck, { childList: true, subtree: true, attributes: true }) }
+  if (mainDeck && mainDeck) { observer.deckContainer.disconnect() }
 });
 observer.deckContainer.observe(document.querySelector('.deck-container'), { childList: true });
 
@@ -106,7 +104,7 @@ function takeshot () {
 
   const overlay = document.createElement('div');
   overlay.classList.add('overlay');
-  overlay.onclick = () => { overlay.remove(); };
+  overlay.onclick = () => { overlay.remove() };
   document.body.appendChild(overlay);
 
   const options = {
