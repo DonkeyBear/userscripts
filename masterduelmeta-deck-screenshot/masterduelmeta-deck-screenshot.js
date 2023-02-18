@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Master Duel Meta - Screenshot for Deck Builder
 // @namespace    https://github.com/DonkeyBear
-// @version      0.2.1
+// @version      0.2.2
 // @description  Take a nice shot of your deck!
 // @author       DonkeyBear
 // @match        http://www.masterduelmeta.com/deck-tester*
@@ -10,6 +10,8 @@
 // @require      https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js
 // @grant        none
 // ==/UserScript==
+
+/* eslint semi: ["error", "always"] */
 
 const stylesheet = /* css */`
   .deck-container.taking-shot .new-card, .deck-container.taking-shot .adjust-buttons-container {
@@ -72,7 +74,7 @@ const tabButtonContainer = document.querySelector('ul.svelte-umfxo');
 const newTabButton = document.createElement('li');
 newTabButton.classList.add('svelte-umfxo', 'screenshot-button');
 newTabButton.innerText = 'Screenshot';
-newTabButton.onclick = () => { takeshot() }
+newTabButton.onclick = () => { takeshot(); };
 tabButtonContainer.appendChild(newTabButton);
 
 const observer = {};
@@ -82,29 +84,29 @@ observer.tabButtonContainer = new MutationObserver(() => {
   if (!tabButtonContainer.querySelector('.screenshot-button')) {
     tabButtonContainer.appendChild(newTabButton);
   }
-})
+});
 observer.tabButtonContainer.observe(tabButtonContainer, { childList: true });
 
 // Count cards and print
-observer.mainDeck = new MutationObserver(() => { countCards() });
-observer.extraDeck = new MutationObserver(() => { countCards() });
+observer.mainDeck = new MutationObserver(() => { countCards(); });
+observer.extraDeck = new MutationObserver(() => { countCards(); });
 observer.deckContainer = new MutationObserver(() => {
   const mainDeck = document.querySelector('.deck-container > .box-container');
   const extraDeck = document.querySelector('.extra-side-deck');
-  if (mainDeck) { observer.mainDeck.observe(mainDeck, { childList: true, subtree: true, attributes: true }) }
-  if (extraDeck) { observer.extraDeck.observe(extraDeck, { childList: true, subtree: true, attributes: true }) }
-  if (mainDeck && mainDeck) { observer.deckContainer.disconnect() }
+  if (mainDeck) { observer.mainDeck.observe(mainDeck, { childList: true, subtree: true, attributes: true }); }
+  if (extraDeck) { observer.extraDeck.observe(extraDeck, { childList: true, subtree: true, attributes: true }); }
+  if (mainDeck && mainDeck) { observer.deckContainer.disconnect(); }
 });
 observer.deckContainer.observe(document.querySelector('.deck-container'), { childList: true });
 
-function takeshot() {
+function takeshot () {
   const deckContainer = document.querySelector('.deck-container');
 
   deckContainer.classList.add('taking-shot');
 
   const overlay = document.createElement('div');
   overlay.classList.add('overlay');
-  overlay.onclick = () => { overlay.remove() }
+  overlay.onclick = () => { overlay.remove(); };
   document.body.appendChild(overlay);
 
   const options = {
@@ -112,8 +114,8 @@ function takeshot() {
     useCORS: true,
     backgroundColor: '#001b35', // Background color of <body>
     logging: false
-  }
-  html2canvas(deckContainer.parentElement, options).then(canvas => {
+  };
+  html2canvas(deckContainer.parentElement, options).then(canvas => { // eslint-disable-line no-undef
     canvas.classList.add('screenshot');
     overlay.appendChild(canvas);
   });
@@ -121,32 +123,41 @@ function takeshot() {
   deckContainer.classList.remove('taking-shot');
 }
 
-function countCards() {
-  let counter = {
+function countCards () {
+  const counter = {
     main: 0,
     extra: 0,
     ur: 0,
     sr: 0,
     r: 0,
     n: 0
-  }
+  };
 
   const mainDeckCards = document.querySelectorAll('.deck-container > .box-container > .card-container > .card');
   const extraDeckCards = document.querySelectorAll('.extra-side-deck .card-container > .card');
 
-  for (let cards of [mainDeckCards, extraDeckCards]) {
-    for (let card of cards) {
-      let copies = 1;
-      if (card.querySelector('[alt="2 copies"]')) { copies = 2 }
-      else if (card.querySelector('[alt="3 copies"]')) { copies = 3 }
+  for (const cards of [mainDeckCards, extraDeckCards]) {
+    for (const card of cards) {
+      let copies;
+      if (card.querySelector('[alt="3 copies"]')) {
+        copies = 3;
+      } else if (card.querySelector('[alt="2 copies"]')) {
+        copies = 2;
+      } else {
+        copies = 1;
+      }
 
-      if (cards == mainDeckCards) { counter.main += copies }
-      else if (cards == extraDeckCards) { counter.extra += copies }
+      cards === mainDeckCards ? counter.main += copies : counter.extra += copies;
 
-      if (card.querySelector('[alt="UR Rarity"]')) { counter.ur += copies }
-      else if (card.querySelector('[alt="SR Rarity"]')) { counter.sr += copies }
-      else if (card.querySelector('[alt="R Rarity"]')) { counter.r += copies }
-      else if (card.querySelector('[alt="N Rarity"]')) { counter.n += copies }
+      if (card.querySelector('[alt="UR Rarity"]')) {
+        counter.ur += copies;
+      } else if (card.querySelector('[alt="SR Rarity"]')) {
+        counter.sr += copies;
+      } else if (card.querySelector('[alt="R Rarity"]')) {
+        counter.r += copies;
+      } else if (card.querySelector('[alt="N Rarity"]')) {
+        counter.n += copies;
+      }
     }
   }
 
