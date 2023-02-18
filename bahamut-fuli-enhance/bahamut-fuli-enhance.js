@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         巴哈姆特勇者福利社++
 // @namespace    https://github.com/DonkeyBear
-// @version      0.7.2
+// @version      0.7.3
 // @description  改進巴哈姆特的勇者福利社，動態載入全部商品、加入過濾隱藏功能、標示競標目前出價等。
 // @author       DonkeyBear
 // @match        https://fuli.gamer.com.tw/shop.php*
@@ -9,8 +9,26 @@
 // @grant        none
 // ==/UserScript==
 
-// 修正上排功能鈕的邊距，保持頁面樣式
-document.querySelector(".tabs-btn-box").style.marginTop = "0";
+const stylesheet = /* css */`
+  .tabs-btn-box {
+    margin-top: 0;
+  }
+  a.btn-distance.fuli-enhance {
+    border-left: 1px solid;
+  }
+  a.btn-distance.fuli-enhance > [type=checkbox] {
+    margin-right: .15rem;
+  }
+  .d-none, #BH-pagebtn {
+    display: none;
+  }
+  .digital.unaffordable {
+    color: #DF4747;
+  }
+`;
+const style = document.createElement('style');
+style.textContent = stylesheet;
+document.head.appendChild(style);
 
 // 依照 URL Param 判斷是否執行後續程式
 let newUrl = new URL(window.location);
@@ -31,12 +49,10 @@ const TYPE_TAG = {
 
 function setupButton(labelText, keywordToHide, checkboxId) {
   let newFunctionButton = document.createElement("a");
-  newFunctionButton.className = "flex-center btn-distance";
-  newFunctionButton.style.borderLeft = "1px solid";
+  newFunctionButton.classList.add('flex-center', 'btn-distance', 'fuli-enhance');
   let newCheckbox = document.createElement("input");
   newCheckbox.id = checkboxId;
   newCheckbox.type = "checkbox";
-  newCheckbox.style.marginRight = "0.15rem";
   newCheckbox.onchange = (e) => { toggleItemCards(keywordToHide, e.target.checked) }
   let newLabel = document.createElement("label");
   newLabel.setAttribute("for", checkboxId);
@@ -48,11 +64,9 @@ function setupButton(labelText, keywordToHide, checkboxId) {
 
 function toggleItemCards(keywaord, hide) {
   let cards = document.querySelectorAll("a.items-card");
-  let styleDisplayString = "";
-  if (hide) { styleDisplayString = "none" }
   for (let card of cards) {
     if (card.querySelector(".type-tag").innerText.includes(keywaord)) {
-      card.style.display = styleDisplayString;
+      hide ? card.classList.add('d-none') : card.classList.remove('d-none');
     }
   }
 }
@@ -80,7 +94,7 @@ function getCurrentBid(itemsCardElement) {
 function colorPriceTag(itemsCardElement) {
   let priceElement = itemsCardElement.querySelector(".digital")
   let price = Number(priceElement.innerText.replaceAll(/\D/, ""));
-  if (DEPOSIT < price) { priceElement.style.color = "#DF4747" }
+  if (DEPOSIT < price) { priceElement.classList.add('unaffordable') }
 }
 
 /* 放置功能按鈕 */
@@ -124,7 +138,6 @@ for (let card of document.querySelectorAll("a.items-card")) {
 }
 
 /* 動態載入全部商品 */
-document.getElementById("BH-pagebtn").style.display = "none"; // 隱藏選頁按鈕區塊
 let itemListBox = document.querySelector(".item-list-box");
 let maxPage = document.querySelector(".BH-pagebtnA a:last-child").innerText;
 if (maxPage == "1") { return } // 若僅一頁則不需讀取
