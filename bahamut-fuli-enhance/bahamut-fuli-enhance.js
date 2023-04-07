@@ -25,6 +25,21 @@ const stylesheet = /* css */`
   .digital.unaffordable {
     color: #DF4747;
   }
+
+  #exchange-item-counter,
+  #bid-item-counter,
+  #lottery-item-counter {
+    color: #11AAC1;
+  }
+
+  #exchange-item-counter,
+  #bid-item-counter {
+    margin-right: .75rem;
+  }
+
+  .digital.current-bid {
+    margin-left: 8px;
+  }
 `;
 const style = document.createElement('style');
 style.textContent = stylesheet;
@@ -85,7 +100,7 @@ function getCurrentBid (itemsCardElement) {
         currentBid = item.querySelector('.pbox-content-r').innerText.match(/[\d|,]+/)[0];
         break;
       }
-      const newTextHTML = /* html */`目前出價<p class="digital" style="margin-left:8px">${currentBid}</p>巴幣`;
+      const newTextHTML = /* html */`目前出價<p class="digital current-bid">${currentBid}</p>巴幣`;
       itemsCardElement.querySelector('.price').innerHTML = newTextHTML;
       colorPriceTag(itemsCardElement);
     });
@@ -108,11 +123,11 @@ document.querySelector('#forum-lastBoard').insertAdjacentHTML('afterend', /* htm
     <h5>現有商品數量</h5>
     <div class="BH-rbox flex-center">
       <span>兌換類：</span>
-      <span id="exchange-item-counter" style="color:#11AAC1;margin-right:.75rem">0</span>
+      <span id="exchange-item-counter">0</span>
       <span>競標類：</span>
-      <span id="bid-item-counter" style="color:#11AAC1;margin-right:.75rem">0</span>
+      <span id="bid-item-counter">0</span>
       <span>抽獎類：</span>
-      <span id="lottery-item-counter" style="color:#11AAC1">0</span>
+      <span id="lottery-item-counter">0</span>
     </div>
   </div>
 `);
