@@ -14,6 +14,22 @@
 // 檢查頁面是否為吉他譜內頁
 if (!document.title.includes('[吉他譜]')) { return }
 
+// 新增樣式
+const stylesheet = /* css */`
+  .minus-button, .plus-button {
+    width: 3em;
+    text-align: center;
+  }
+
+  .capo-area {
+    width: 10em;
+    text-align: center;
+  }
+`;
+const style = document.createElement('style');
+style.textContent = stylesheet;
+document.head.appendChild(style);
+
 // 新增監聽器
 const toneset = document.querySelector('.toneset');
 const observer = new MutationObserver(() => {
@@ -33,9 +49,7 @@ document.querySelector('.putone').insertBefore(new_tfunc2, document.querySelecto
 // 減號按鈕
 const div_minus = document.createElement('div');
 const span_minus = document.createElement('span');
-div_minus.className = 'r';
-div_minus.style.width = '3em';
-div_minus.style.textAlign = 'center';
+div_minus.classList.add('r', 'minus-button');
 span_minus.innerText = '－';
 span_minus.className = 'cset';
 span_minus.onclick = () => {
@@ -55,9 +69,7 @@ document.querySelector('.new_tfunc2').appendChild(div_minus);
 // 當前調號
 const div_capo = document.createElement('div');
 const span_capo = document.createElement('span');
-div_capo.className = 'r';
-div_capo.style.minWidth = '10em';
-div_capo.style.textAlign = 'center';
+div_capo.classList.add('r', 'capo-area');
 span_capo.className = 'cset';
 div_capo.appendChild(span_capo);
 document.querySelector('.new_tfunc2').appendChild(div_capo);
@@ -65,9 +77,7 @@ document.querySelector('.new_tfunc2').appendChild(div_capo);
 // 加號按鈕
 const div_plus = document.createElement('div');
 const span_plus = document.createElement('span');
-div_plus.className = 'r';
-div_plus.style.width = '3em';
-div_plus.style.textAlign = 'center';
+div_plus.classList.add('r', 'plus-button');
 span_plus.innerText = '＋';
 span_plus.className = 'cset';
 span_plus.onclick = () => {
@@ -108,7 +118,7 @@ newDiv2.className = 'r';
 newSpan2.innerText = '以移調器開啟樂譜';
 newSpan2.className = 'cset';
 newSpan2.onclick = () => {
-  // 將空白（%C2%A0）的改以 "{數量}" 表示，其中數量之值轉換為 36 進制
+  // 將空白（%C2%A0）改以 "{數量}" 表示，其中數量之值轉換為 36 進制
   const uri = encodeURI(document.getElementById('tone_z').innerText.replaceAll('#', '[s]').trim());
   const compressedUri = uri.replace(/((%C2%A0)\2*)/g, match => {
     return `{${(match.length / 6).toString(36)}}`;
