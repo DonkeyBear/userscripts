@@ -15,16 +15,16 @@
 if (!document.title.includes('[吉他譜]')) { return }
 
 // 新增監聽器
-document.querySelector('.toneset').addEventListener('DOMNodeInserted', function getPlayTone (event) {
-  if (document.querySelector('.plays')) {
-    if (event.target.classList.contains('select')) {
-      if (event.target.innerText.includes('Capo')) {
-        span_capo.innerText = event.target.innerText;
-        document.querySelector('.toneset').removeEventListener('DOMNodeInserted', getPlayTone);
-      }
-    }
+const toneset = document.querySelector('.toneset');
+const observer = new MutationObserver(() => {
+  const selectedCapo = toneset.querySelector('.capo > .select');
+  if (selectedCapo) {
+    span_capo.innerText = selectedCapo.innerText;
+    console.warn('aQWEUHLIQUWHLIUQHWLDUWQDH');
+    observer.disconnect();
   }
 });
+observer.observe(toneset, { childList: true, subtree: true });
 
 // 在頁面插入新功能列
 const new_tfunc2 = document.createElement('div');
