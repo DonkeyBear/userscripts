@@ -20,7 +20,6 @@ const observer = new MutationObserver(() => {
   const selectedCapo = toneset.querySelector('.capo > .select');
   if (selectedCapo) {
     span_capo.innerText = selectedCapo.innerText;
-    console.warn('aQWEUHLIQUWHLIUQHWLDUWQDH');
     observer.disconnect();
   }
 });
