@@ -35,63 +35,63 @@ const toneset = document.querySelector('.toneset');
 const observer = new MutationObserver(() => {
   const selectedCapo = toneset.querySelector('.capo > .select');
   if (!selectedCapo) { return }
-  span_capo.innerText = selectedCapo.innerText;
+  spanCapo.innerText = selectedCapo.innerText;
   observer.disconnect();
 });
 observer.observe(toneset, { childList: true, subtree: true });
 
 // 在頁面插入新功能列
-const new_tfunc2 = document.createElement('div');
-new_tfunc2.className = 'tfunc2 new_tfunc2';
-document.querySelector('.putone').insertBefore(new_tfunc2, document.querySelector('.tfunc'));
+const divNewTfunc2 = document.createElement('div');
+divNewTfunc2.classList.add('tfunc2', 'new-tfunc2');
+document.querySelector('.putone').insertBefore(divNewTfunc2, document.querySelector('.tfunc'));
 
 // 減號按鈕
-const div_minus = document.createElement('div');
-div_minus.classList.add('r', 'minus-button');
-div_minus.innerHTML = /* html */`<span class="cset">－</span>`; // eslint-disable-line quotes
-div_minus.onclick = () => {
-  span_capo.innerText = span_capo.innerText.replace(/-?\d+/, match => {
+const divMinusButton = document.createElement('div');
+divMinusButton.classList.add('r', 'minus-button');
+divMinusButton.innerHTML = /* html */`<span class="cset">－</span>`; // eslint-disable-line quotes
+divMinusButton.onclick = () => {
+  spanCapo.innerText = spanCapo.innerText.replace(/-?\d+/, match => {
     return Number(match) - 1;
   });
-  span_capo.innerText = span_capo.innerText.replace(/\(.+\)/, match => {
+  spanCapo.innerText = spanCapo.innerText.replace(/\(.+\)/, match => {
     return `(${transpose(match.slice(1, -1), 1)})`;
   });
   for (const i of document.querySelectorAll('#tone_z .tf')) {
     i.innerHTML = transpose(i.innerText, 1).replace(/(#|b)/g, '<sup>$&</sup>');
   }
 };
-document.querySelector('.new_tfunc2').appendChild(div_minus);
+document.querySelector('.tfunc2-new').appendChild(divMinusButton);
 
 // 當前調號
-const div_capo = document.createElement('div');
-const span_capo = document.createElement('span');
-div_capo.classList.add('r', 'capo-area');
-span_capo.className = 'cset';
-div_capo.appendChild(span_capo);
-document.querySelector('.new_tfunc2').appendChild(div_capo);
+const divCapo = document.createElement('div');
+const spanCapo = document.createElement('span');
+divCapo.classList.add('r', 'capo-area');
+spanCapo.className = 'cset';
+divCapo.appendChild(spanCapo);
+document.querySelector('.tfunc2-new').appendChild(divCapo);
 
 // 加號按鈕
-const div_plus = document.createElement('div');
-div_plus.classList.add('r', 'plus-button');
-div_plus.innerHTML = /* html */`<span class="cset">＋</span>`; // eslint-disable-line quotes
-div_plus.onclick = () => {
-  span_capo.innerText = span_capo.innerText.replace(/-?\d+/, match => {
+const divPlusButton = document.createElement('div');
+divPlusButton.classList.add('r', 'plus-button');
+divPlusButton.innerHTML = /* html */`<span class="cset">＋</span>`; // eslint-disable-line quotes
+divPlusButton.onclick = () => {
+  spanCapo.innerText = spanCapo.innerText.replace(/-?\d+/, match => {
     return Number(match) + 1;
   });
-  span_capo.innerText = span_capo.innerText.replace(/\(.+\)/, match => {
+  spanCapo.innerText = spanCapo.innerText.replace(/\(.+\)/, match => {
     return `(${transpose(match.slice(1, -1), -1)})`;
   });
   for (const i of document.querySelectorAll('#tone_z .tf')) {
     i.innerHTML = transpose(i.innerText, -1).replace(/(#|b)/g, '<sup>$&</sup>');
   }
 };
-document.querySelector('.new_tfunc2').appendChild(div_plus);
+document.querySelector('.tfunc2-new').appendChild(divPlusButton);
 
 // 在新功能列插入「複製樂譜」按鈕
-const newDiv = document.createElement('div');
-newDiv.classList.add('r');
-newDiv.innerHTML = /* html */`<span class="cset">複製樂譜</span>`; // eslint-disable-line quotes
-newDiv.onclick = () => {
+const divCopyButton = document.createElement('div');
+divCopyButton.classList.add('r');
+divCopyButton.innerHTML = /* html */`<span class="cset">複製樂譜</span>`; // eslint-disable-line quotes
+divCopyButton.onclick = () => {
   navigator.clipboard.writeText(document.getElementById('tone_z').innerText.trim()).then(() => {
     alert('複製樂譜成功！');
   }, (err) => {
@@ -99,13 +99,13 @@ newDiv.onclick = () => {
     console.error('複製樂譜失敗：', err);
   });
 };
-document.querySelector('.tfunc2').appendChild(newDiv);
+document.querySelector('.tfunc2').appendChild(divCopyButton);
 
 // 在新功能列插入「以移調器開啟樂譜」按鈕
-const newDiv2 = document.createElement('div');
-newDiv2.classList.add('r');
-newDiv2.innerHTML = /* html */`<span class="cset">以移調器開啟樂譜</span>`; // eslint-disable-line quotes
-newDiv2.onclick = () => {
+const divOpenButton = document.createElement('div');
+divOpenButton.classList.add('r');
+divOpenButton.innerHTML = /* html */`<span class="cset">以移調器開啟樂譜</span>`; // eslint-disable-line quotes
+divOpenButton.onclick = () => {
   // 將空白（%C2%A0）改以 "{數量}" 表示，其中數量之值轉換為 36 進制
   const uri = encodeURI(document.getElementById('tone_z').innerText.replaceAll('#', '[s]').trim());
   const compressedUri = uri.replace(/((%C2%A0)\2*)/g, match => {
@@ -116,7 +116,7 @@ newDiv2.onclick = () => {
     '_blank'
   ).focus();
 };
-document.querySelector('.tfunc2').appendChild(newDiv2);
+document.querySelector('.tfunc2').appendChild(divOpenButton);
 
 function transpose (chord, transposeValue) {
   const keys = {
