@@ -30,12 +30,17 @@ const style = document.createElement('style');
 style.textContent = stylesheet;
 document.head.appendChild(style);
 
+// 記錄初始調性
+let initialCapoValue, initialCapoText;
+
 // 新增監聽器
 const toneset = document.querySelector('.toneset');
 const observer = new MutationObserver(() => {
   const selectedCapo = toneset.querySelector('.capo > .select');
   if (!selectedCapo) { return }
-  spanCapo.innerText = selectedCapo.innerText;
+  divCapo.querySelector('span').innerText = selectedCapo.innerText;
+  initialCapoText = selectedCapo.innerText;
+  initialCapoValue = Number(initialCapoText.match(/\d+/)[0]);
   observer.disconnect();
 });
 observer.observe(toneset, { childList: true, subtree: true });
@@ -50,10 +55,10 @@ const divMinusButton = document.createElement('div');
 divMinusButton.classList.add('r', 'minus-button');
 divMinusButton.innerHTML = /* html */`<span class="cset">－</span>`; // eslint-disable-line quotes
 divMinusButton.onclick = () => {
-  spanCapo.innerText = spanCapo.innerText.replace(/-?\d+/, match => {
+  divCapo.querySelector('span').innerText = divCapo.innerText.replace(/-?\d+/, match => {
     return Number(match) - 1;
   });
-  spanCapo.innerText = spanCapo.innerText.replace(/\(.+\)/, match => {
+  divCapo.querySelector('span').innerText = divCapo.innerText.replace(/\(.+\)/, match => {
     return `(${transpose(match.slice(1, -1), 1)})`;
   });
   for (const i of document.querySelectorAll('#tone_z .tf')) {
@@ -64,10 +69,16 @@ document.querySelector('.tfunc2-new').appendChild(divMinusButton);
 
 // 當前調號
 const divCapo = document.createElement('div');
-const spanCapo = document.createElement('span');
 divCapo.classList.add('r', 'capo-area');
-spanCapo.className = 'cset';
-divCapo.appendChild(spanCapo);
+divCapo.innerHTML = /* html */`<span class="cset"></span>`; // eslint-disable-line quotes
+divCapo.onclick = () => {
+  const currentCapoValue = Number(divCapo.innerText.match(/\d+/)[0]);
+  const differenceCapoValue = initialCapoValue - currentCapoValue;
+  divCapo.querySelector('span').innerText = initialCapoText;
+  for (const i of document.querySelectorAll('#tone_z .tf')) {
+    i.innerHTML = transpose(i.innerText, differenceCapoValue).replace(/(#|b)/g, '<sup>$&</sup>');
+  }
+};
 document.querySelector('.tfunc2-new').appendChild(divCapo);
 
 // 加號按鈕
@@ -75,10 +86,10 @@ const divPlusButton = document.createElement('div');
 divPlusButton.classList.add('r', 'plus-button');
 divPlusButton.innerHTML = /* html */`<span class="cset">＋</span>`; // eslint-disable-line quotes
 divPlusButton.onclick = () => {
-  spanCapo.innerText = spanCapo.innerText.replace(/-?\d+/, match => {
+  divCapo.querySelector('span').innerText = divCapo.innerText.replace(/-?\d+/, match => {
     return Number(match) + 1;
   });
-  spanCapo.innerText = spanCapo.innerText.replace(/\(.+\)/, match => {
+  divCapo.querySelector('span').innerText = divCapo.innerText.replace(/\(.+\)/, match => {
     return `(${transpose(match.slice(1, -1), -1)})`;
   });
   for (const i of document.querySelectorAll('#tone_z .tf')) {
