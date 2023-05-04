@@ -37,10 +37,11 @@ let initialCapoValue, initialCapoText;
 const toneset = document.querySelector('.toneset');
 const observer = new MutationObserver(() => {
   const selectedCapo = toneset.querySelector('.capo > .select');
-  if (!selectedCapo) { return }
-  divCapo.querySelector('span').innerText = selectedCapo.innerText;
+  const spanCapo = document.querySelector('.capo-area > span');
+  if (!selectedCapo || !spanCapo) { return }
   initialCapoText = selectedCapo.innerText;
-  initialCapoValue = Number(initialCapoText.match(/\d+/)[0]);
+  initialCapoValue = Number(initialCapoText.match(/-?\d+/)[0]);
+  spanCapo.innerText = selectedCapo.innerText;
   observer.disconnect();
 });
 observer.observe(toneset, { childList: true, subtree: true });
@@ -65,21 +66,21 @@ divMinusButton.onclick = () => {
     i.innerHTML = transpose(i.innerText, 1).replace(/(#|b)/g, '<sup>$&</sup>');
   }
 };
-document.querySelector('.tfunc2-new').appendChild(divMinusButton);
+document.querySelector('.new-tfunc2').appendChild(divMinusButton);
 
 // 當前調號
 const divCapo = document.createElement('div');
 divCapo.classList.add('r', 'capo-area');
 divCapo.innerHTML = /* html */`<span class="cset"></span>`; // eslint-disable-line quotes
 divCapo.onclick = () => {
-  const currentCapoValue = Number(divCapo.innerText.match(/\d+/)[0]);
-  const differenceCapoValue = initialCapoValue - currentCapoValue;
+  const currentCapoValue = Number(divCapo.innerText.match(/-?\d+/)[0]);
+  const differenceCapoValue = currentCapoValue - initialCapoValue;
   divCapo.querySelector('span').innerText = initialCapoText;
   for (const i of document.querySelectorAll('#tone_z .tf')) {
     i.innerHTML = transpose(i.innerText, differenceCapoValue).replace(/(#|b)/g, '<sup>$&</sup>');
   }
 };
-document.querySelector('.tfunc2-new').appendChild(divCapo);
+document.querySelector('.new-tfunc2').appendChild(divCapo);
 
 // 加號按鈕
 const divPlusButton = document.createElement('div');
@@ -96,7 +97,7 @@ divPlusButton.onclick = () => {
     i.innerHTML = transpose(i.innerText, -1).replace(/(#|b)/g, '<sup>$&</sup>');
   }
 };
-document.querySelector('.tfunc2-new').appendChild(divPlusButton);
+document.querySelector('.new-tfunc2').appendChild(divPlusButton);
 
 // 在新功能列插入「複製樂譜」按鈕
 const divCopyButton = document.createElement('div');
