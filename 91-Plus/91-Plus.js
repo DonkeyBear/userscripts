@@ -5,7 +5,7 @@
 // @description  待定。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/song/*
-// @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
+// @icon         https://www.91pu.com.tw/favicon.ico
 // @grant        none
 // ==/UserScript==
 
@@ -24,6 +24,12 @@ const stylesheet = /* css */`
   .capo-area {
     width: 10em;
     text-align: center;
+  }
+
+  .tfunc > :nth-child(1), /* 功能列的星星 */
+  .tfunc > :nth-child(4), /* 功能列的樂譜類型按鈕 */
+  .tfunc > :nth-child(5) /* 功能列的其他 VIP 功能按鈕 */ {
+    display: none;
   }
 `;
 const style = document.createElement('style');
