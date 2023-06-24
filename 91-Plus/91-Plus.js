@@ -40,17 +40,23 @@ document.head.appendChild(style);
 let initialCapoValue, initialCapoText;
 
 // 新增監聽器
-const toneset = document.querySelector('.toneset');
-const observer = new MutationObserver(() => {
-  const selectedCapo = toneset.querySelector('.capo > .select');
+function initCapo () {
+  const selectedCapo = document.querySelector('.capo > .select');
   const spanCapo = document.querySelector('.capo-area > span');
-  if (!selectedCapo || !spanCapo) { return }
+  if (!selectedCapo || !spanCapo) { return false }
   initialCapoText = selectedCapo.innerText;
   initialCapoValue = Number(initialCapoText.match(/-?\d+/)[0]);
   spanCapo.innerText = selectedCapo.innerText;
-  observer.disconnect();
-});
-observer.observe(toneset, { childList: true, subtree: true });
+  return true;
+}
+
+if (!initCapo()) {
+  const observer = new MutationObserver(() => {
+    if (initCapo()) { observer.disconnect() }
+  });
+  const toneset = document.querySelector('.toneset');
+  observer.observe(toneset, { childList: true, subtree: true });
+}
 
 // 在頁面插入新功能列
 const divNewTfunc2 = document.createElement('div');
@@ -60,7 +66,7 @@ document.querySelector('.putone').insertBefore(divNewTfunc2, document.querySelec
 // 減號按鈕
 const divMinusButton = document.createElement('div');
 divMinusButton.classList.add('r', 'minus-button');
-divMinusButton.innerHTML = /* html */`<span class="cset">－</span>`; // eslint-disable-line quotes
+divMinusButton.innerHTML = /* html */`<span class="cset">◀</span>`; // eslint-disable-line quotes
 divMinusButton.onclick = () => {
   divCapo.querySelector('span').innerText = divCapo.innerText.replace(/-?\d+/, match => {
     return Number(match) - 1;
@@ -91,7 +97,7 @@ document.querySelector('.new-tfunc2').appendChild(divCapo);
 // 加號按鈕
 const divPlusButton = document.createElement('div');
 divPlusButton.classList.add('r', 'plus-button');
-divPlusButton.innerHTML = /* html */`<span class="cset">＋</span>`; // eslint-disable-line quotes
+divPlusButton.innerHTML = /* html */`<span class="cset">▶</span>`; // eslint-disable-line quotes
 divPlusButton.onclick = () => {
   divCapo.querySelector('span').innerText = divCapo.innerText.replace(/-?\d+/, match => {
     return Number(match) + 1;
