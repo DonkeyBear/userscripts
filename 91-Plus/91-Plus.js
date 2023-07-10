@@ -116,7 +116,8 @@ const divCopyButton = document.createElement('div');
 divCopyButton.classList.add('r');
 divCopyButton.innerHTML = /* html */`<span class="cset">複製樂譜</span>`; // eslint-disable-line quotes
 divCopyButton.onclick = () => {
-  navigator.clipboard.writeText(document.getElementById('tone_z').innerText.trim()).then(() => {
+  const sheet = document.getElementById('tone_z').innerText.trim().replaceAll(/\s*\n/g, '\n');
+  navigator.clipboard.writeText(sheet).then(() => {
     alert('複製樂譜成功！');
   }, (err) => {
     alert('複製樂譜失敗！');
