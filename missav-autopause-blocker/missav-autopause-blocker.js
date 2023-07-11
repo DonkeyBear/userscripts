@@ -9,7 +9,7 @@
 // @grant        none
 // ==/UserScript==
 
-const videoPlayer = document.querySelector('.videoPlayer');
+const videoPlayer = document.querySelector('video.player');
 if (!videoPlayer) { return }
 
 let windowIsBlurred = false;
