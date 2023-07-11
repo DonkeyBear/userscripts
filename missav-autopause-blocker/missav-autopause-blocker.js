@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MissAV 防止自動暫停
 // @namespace    https://github.com/DonkeyBear
-// @version      0.1
+// @version      0.2
 // @description  防止 MissAV 在切換視窗視窗、標籤時自動暫停
 // @author       DonkeyBear
 // @match        https://missav.com/*
