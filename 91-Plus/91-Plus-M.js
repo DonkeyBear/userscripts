@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.97.9
+// @version      0.97.9a
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -107,7 +107,7 @@ document.head.appendChild(style);
 
 const observerCheckList = {
   modifyTitle: false,
-  modifyHeaderFunction: false,
+  // modifyHeaderFunction: false,
   modifyTransposeButton: false
 };
 
@@ -122,7 +122,7 @@ const observer = new MutationObserver(() => {
   }
 
   /* 修改頁首功能鈕（下排） */
-  if (!observerCheckList.modifyHeaderFunction) {
+  /* if (!observerCheckList.modifyHeaderFunction) {
     if (document.querySelectorAll('.setint .hr').length === 6) {
       // 隱藏頁首部分功能鈕
       observerCheckList.modifyHeaderFunction = true;
@@ -134,7 +134,7 @@ const observer = new MutationObserver(() => {
       // 新增功能鈕
       const newFunctionDiv = document.createElement('div');
       newFunctionDiv.classList.add('hr', 'select-all');
-      newFunctionDiv.innerHTML = /* html */`<button class="scf">全選</button>`; // eslint-disable-line quotes
+      newFunctionDiv.innerHTML = html`<button class="scf">全選</button>`; // eslint-disable-line quotes
       newFunctionDiv.onclick = () => {
         if (window.getSelection) {
           const range = document.createRange();
@@ -145,7 +145,7 @@ const observer = new MutationObserver(() => {
       };
       document.querySelector('.setint').appendChild(newFunctionDiv);
     }
-  }
+  } */
 
   /* 刪除內建的移調鈕，建立自製的 */
   if (!observerCheckList.modifyTransposeButton) {
