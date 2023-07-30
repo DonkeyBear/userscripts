@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.97.8
+// @version      0.97.9
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -65,17 +65,17 @@ const stylesheet = /* css */`
 
   .capo-section {
     flex-grow: 1;
-    margin-right: 0;
-    display: flex;
-    justify-content: space-between;
+    margin-right: 0 !important;
+    display: flex !important;
+    justify-content: space-between !important;
   }
 
   .capo-button.decrease {
-    padding: 0 20px 0 10px;
+    padding-right: 20px;
   }
 
   .capo-button.increase {
-    padding: 0 10px 0 20px;
+    padding-left: 20px;
   }
 
   /* 需要倒數才能關閉的蓋版廣告 */
@@ -160,7 +160,7 @@ const observer = new MutationObserver(() => {
       newFunctionDiv.innerHTML = /* html */`
         <button class="scf capo-button decrease">◀</button>
         <button class="scf capo-button info">
-          CAPO：<span class="text-capo">${stringCapo}</span>（<span class="text-key">${stringKey}</span>）
+          CAPO：<span class="text-capo">${stringCapo}</span>（<span class="text-key">${stringKey.replace(/(#|b)/g, '<sup>$&</sup>')}</span>）
         </button>
         <button class="scf capo-button increase">▶</button>
       `;
@@ -168,7 +168,7 @@ const observer = new MutationObserver(() => {
         const spanCapo = newFunctionDiv.querySelector('.text-capo');
         const spanKey = newFunctionDiv.querySelector('.text-key');
         spanCapo.innerText = Number(spanCapo.innerText) + delta;
-        spanKey.innerText = transpose(spanKey.innerText, -delta);
+        spanKey.innerHTML = transpose(spanKey.innerText, -delta).replace(/(#|b)/g, '<sup>$&</sup>');
 
         for (const chordEl of document.querySelectorAll('#tone_z .tf')) {
           chordEl.innerHTML = transpose(chordEl.innerText, -delta).replace(/(#|b)/g, '<sup>$&</sup>');
