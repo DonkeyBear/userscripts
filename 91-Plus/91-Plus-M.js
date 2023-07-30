@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.97.3
+// @version      0.97.4
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -23,6 +23,8 @@ const stylesheet = /* css */`
   }
 
   header {
+    background-color: rgba(25, 20, 90, 0.5);
+    backdrop-filter: blur(5px) saturate(80%);
     display: flex;
     justify-content: center;
     font-family: system-ui;
@@ -30,6 +32,20 @@ const stylesheet = /* css */`
 
   header > .set {
     width: 768px;
+  }
+
+  .tfunc2 {
+    margin: 10px;
+  }
+
+  .setint {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .setint,
+  .plays .capo {
+    display: flex;
+    justify-content: space-between;
   }
 
   /* 需要倒數才能關閉的蓋版廣告 */
@@ -59,10 +75,7 @@ document.head.appendChild(style);
 
 const observerCheckList = {
   modifyTitle: false,
-  modifyHeaderBackground: false,
-  modifyHeaderFlex: false,
   modifyHeaderFunction: false,
-  modifyFunctionBarMargin: false,
   modifyTransposeButton: false
 };
 
@@ -91,44 +104,10 @@ const observer = new MutationObserver(() => {
 
   /* 更改網頁標題 */
   if (!observerCheckList.modifyTitle) {
-    if (document.querySelector('#mtitle')) {
-      document.title = `${document.querySelector('#mtitle').innerText} | 91+ M`;
+    const songTitle = document.querySelector('#mtitle');
+    if (songTitle?.innerText.trim()) {
       observerCheckList.modifyTitle = true;
-    }
-  }
-
-  /* 更改頁首背景樣式 */
-  if (!observerCheckList.modifyHeaderBackground) {
-    if (document.querySelector('header')) {
-      document.querySelector('header').style.backdropFilter = 'blur(5px) saturate(80%)';
-      document.querySelector('header').style['-webkit-backdrop-filter'] = 'blur(5px) saturate(80%)';
-      document.querySelector('header').style.backgroundColor = 'rgba(25, 20, 90, 0.5)';
-      observerCheckList.modifyHeaderBackground = true;
-    }
-  }
-
-  /* 更改頁首內容物排列方式 */
-  if (!observerCheckList.modifyHeaderFlex) {
-    for (const elem of [
-      document.querySelector('.setint'),
-      document.querySelector('.plays .capo')
-    ]) {
-      if (elem) {
-        elem.style.display = 'flex';
-        elem.style.justifyContent = 'space-between';
-        if (elem.classList.contains('setint')) {
-          elem.style.borderTop = '1px solid rgba(255, 255, 255, 0.2)';
-        }
-        observerCheckList.modifyHeaderFlex = true;
-      }
-    }
-  }
-
-  /* 更改六線譜前奏功能列邊界留白 */
-  if (!observerCheckList.modifyFunctionBarMargin) {
-    if (document.querySelector('.tfunc2')) {
-      observerCheckList.modifyFunctionBarMargin = true;
-      document.querySelector('.tfunc2').style.margin = '10px';
+      document.title = `${songTitle.innerText} | 91+ M`;
     }
   }
 
@@ -142,7 +121,7 @@ const observer = new MutationObserver(() => {
       }
       // 建立降調鈕
       const spanMinus = document.createElement('span');
-      spanMinus.innerText = '－';
+      spanMinus.innerText = '◀';
       spanMinus.className = 'select';
       spanMinus.onclick = () => {
         spanCapo.innerText = spanCapo.innerText.replace(/-?\d+/, match => {
@@ -160,7 +139,7 @@ const observer = new MutationObserver(() => {
       spanCapo.innerText = `Capo: ${stringCapo} (${stringKey})`;
       // 建立降調鈕
       const spanPlus = document.createElement('span');
-      spanPlus.innerText = '＋';
+      spanPlus.innerText = '▶';
       spanPlus.className = 'select';
       spanPlus.onclick = () => {
         spanCapo.innerText = spanCapo.innerText.replace(/-?\d+/, match => {
