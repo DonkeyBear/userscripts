@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.97.4
+// @version      0.97.5
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -25,6 +25,7 @@ const stylesheet = /* css */`
   header {
     background-color: rgba(25, 20, 90, 0.5);
     backdrop-filter: blur(5px) saturate(80%);
+    -webkit-backdrop-filter: blur(5px) saturate(80%);
     display: flex;
     justify-content: center;
     font-family: system-ui;
@@ -46,6 +47,22 @@ const stylesheet = /* css */`
   .plays .capo {
     display: flex;
     justify-content: space-between;
+  }
+
+  .capo span[play] {
+    display: none;
+  }
+
+  #mtitle {
+    font-family: system-ui;
+  }
+
+  .setint > .hr:not(:last-child) {
+    margin-right: 15px;
+  }
+
+  .hr.capo-section {
+    flex-grow: 1;
   }
 
   /* 需要倒數才能關閉的蓋版廣告 */
@@ -80,6 +97,15 @@ const observerCheckList = {
 };
 
 const observer = new MutationObserver(() => {
+  /* 更改網頁標題 */
+  if (!observerCheckList.modifyTitle) {
+    const songTitle = document.querySelector('#mtitle');
+    if (songTitle?.innerText.trim()) {
+      observerCheckList.modifyTitle = true;
+      document.title = `${songTitle.innerText} | 91+ M`;
+    }
+  }
+
   /* 修改頁首功能鈕（下排） */
   if (!observerCheckList.modifyHeaderFunction) {
     if (document.querySelectorAll('.setint .hr').length === 6) {
@@ -92,74 +118,54 @@ const observer = new MutationObserver(() => {
       }
       // 新增功能鈕
       const newFunctionDiv = document.createElement('div');
-      const newFunctionButton = document.createElement('button');
-      newFunctionDiv.className = 'hr';
-      newFunctionButton.className = 'scf';
-      newFunctionButton.innerText = '全選';
-      newFunctionButton.onclick = () => { selectText('#tone_z') };
-      newFunctionDiv.appendChild(newFunctionButton);
+      newFunctionDiv.classList.add('hr', 'select-all');
+      newFunctionDiv.innerHTML = /* html */`<button class="scf">全選</button>`; // eslint-disable-line quotes
+      newFunctionDiv.onclick = () => {
+        if (window.getSelection) {
+          const range = document.createRange();
+          range.selectNode(document.querySelector('#tone_z'));
+          window.getSelection().removeAllRanges();
+          window.getSelection().addRange(range);
+        }
+      };
       document.querySelector('.setint').appendChild(newFunctionDiv);
-    }
-  }
-
-  /* 更改網頁標題 */
-  if (!observerCheckList.modifyTitle) {
-    const songTitle = document.querySelector('#mtitle');
-    if (songTitle?.innerText.trim()) {
-      observerCheckList.modifyTitle = true;
-      document.title = `${songTitle.innerText} | 91+ M`;
     }
   }
 
   /* 刪除內建的移調鈕，建立自製的 */
   if (!observerCheckList.modifyTransposeButton) {
     if (document.querySelector('.capo .select')) {
+      observerCheckList.modifyTransposeButton = true;
       const stringCapo = document.querySelector('.capo .select').innerText.split(' / ')[0]; // CAPO
       const stringKey = document.querySelector('.capo .select').innerText.split(' / ')[1]; // 調
-      for (const i of document.querySelectorAll('.capo span[play]')) {
-        i.style.display = 'none';
-      }
-      // 建立降調鈕
-      const spanMinus = document.createElement('span');
-      spanMinus.innerText = '◀';
-      spanMinus.className = 'select';
-      spanMinus.onclick = () => {
-        spanCapo.innerText = spanCapo.innerText.replace(/-?\d+/, match => {
-          return Number(match) - 1;
-        });
-        spanCapo.innerText = spanCapo.innerText.replace(/\(.+\)/, match => {
-          return `(${transpose(match.slice(1, -1), 1)})`;
-        });
-        for (const i of document.querySelectorAll('#tone_z .tf')) {
-          i.innerHTML = transpose(i.innerText, 1).replace(/(#|b)/g, '<sup>$&</sup>');
+
+      // 新增功能鈕
+      const newFunctionDiv = document.createElement('div');
+      newFunctionDiv.classList.add('hr', 'capo-section');
+      newFunctionDiv.innerHTML = /* html */`
+        <button class="scf capo decrease">◀</button>
+        <button class="scf capo info">
+          CAPO：<span class="text-capo">${stringCapo}</span>（<span class="text-key">${stringKey}</span>）
+        </button>
+        <button class="scf capo increase">▶</button>
+      `;
+      function transposeEvent (delta) {
+        const spanCapo = newFunctionDiv.querySelector('.text-capo');
+        const spanKey = newFunctionDiv.querySelector('.text-key');
+        spanCapo.innerText = Number(spanCapo.innerText) + delta;
+        spanKey.innerText = transpose(spanKey.innerText, -delta);
+
+        for (const chordEl of document.querySelectorAll('#tone_z .tf')) {
+          chordEl.innerHTML = transpose(chordEl.innerText, -delta).replace(/(#|b)/g, '<sup>$&</sup>');
         }
       };
-      // 當前調
-      const spanCapo = document.createElement('span');
-      spanCapo.innerText = `Capo: ${stringCapo} (${stringKey})`;
-      // 建立降調鈕
-      const spanPlus = document.createElement('span');
-      spanPlus.innerText = '▶';
-      spanPlus.className = 'select';
-      spanPlus.onclick = () => {
-        spanCapo.innerText = spanCapo.innerText.replace(/-?\d+/, match => {
-          return Number(match) + 1;
-        });
-        spanCapo.innerText = spanCapo.innerText.replace(/\(.+\)/, match => {
-          return `(${transpose(match.slice(1, -1), -1)})`;
-        });
-        for (const i of document.querySelectorAll('#tone_z .tf')) {
-          i.innerHTML = transpose(i.innerText, -1).replace(/(#|b)/g, '<sup>$&</sup>');
-        }
-      };
-      // 放入功能列
-      for (const i of [spanMinus, spanCapo, spanPlus]) {
-        document.querySelector('.plays .capo').appendChild(i);
-      }
-      observerCheckList.modifyTransposeButton = true;
+      newFunctionDiv.querySelector('.capo.decrease').onclick = transposeEvent(-1);
+      newFunctionDiv.querySelector('.capo.increase').onclick = transposeEvent(1);
+      document.querySelector('.setint').appendChild(newFunctionDiv);
     }
   }
 });
+
 observer.observe(document.body, { childList: true, subtree: true });
 
 function transpose (chord, transposeValue) {
@@ -222,13 +228,4 @@ function transpose (chord, transposeValue) {
   }
 
   return resultChord;
-}
-
-function selectText (containerSelector) {
-  if (window.getSelection) {
-    const range = document.createRange();
-    range.selectNode(document.querySelector(containerSelector));
-    window.getSelection().removeAllRanges();
-    window.getSelection().addRange(range);
-  }
 }
