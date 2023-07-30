@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.97.5
+// @version      0.97.6
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -143,11 +143,11 @@ const observer = new MutationObserver(() => {
       const newFunctionDiv = document.createElement('div');
       newFunctionDiv.classList.add('hr', 'capo-section');
       newFunctionDiv.innerHTML = /* html */`
-        <button class="scf capo decrease">◀</button>
-        <button class="scf capo info">
+        <button class="scf capo-button decrease">◀</button>
+        <button class="scf capo-button info">
           CAPO：<span class="text-capo">${stringCapo}</span>（<span class="text-key">${stringKey}</span>）
         </button>
-        <button class="scf capo increase">▶</button>
+        <button class="scf capo-button increase">▶</button>
       `;
       function transposeEvent (delta) {
         const spanCapo = newFunctionDiv.querySelector('.text-capo');
