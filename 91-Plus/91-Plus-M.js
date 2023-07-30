@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.97.7
+// @version      0.97.8
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -49,20 +49,33 @@ const stylesheet = /* css */`
     justify-content: space-between;
   }
 
-  .capo span[play] {
-    display: none;
-  }
-
   #mtitle {
     font-family: system-ui;
   }
 
-  .setint > .hr:not(:last-child) {
-    margin-right: 15px;
+  .setint {
+    border-top: 0;
+    padding: 10px;
   }
 
-  .hr.capo-section {
+  .setint > .hr {
+    margin-right: 15px;
+    padding: 0 15px;
+  }
+
+  .capo-section {
     flex-grow: 1;
+    margin-right: 0;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .capo-button.decrease {
+    padding: 0 20px 0 10px;
+  }
+
+  .capo-button.increase {
+    padding: 0 10px 0 20px;
   }
 
   /* 需要倒數才能關閉的蓋版廣告 */
@@ -79,8 +92,10 @@ const stylesheet = /* css */`
   .autoscroll,
   /* 頁首的返回列 */
   .backplace,
-  /* 頁首的Key選項 */
+  /* 頁首的多餘列 */
   .set .keys,
+  .set .plays,
+  .set .clear,
   /* 其餘的Google廣告 */
   .adsbygoogle {
     display: none !important;
@@ -159,8 +174,8 @@ const observer = new MutationObserver(() => {
           chordEl.innerHTML = transpose(chordEl.innerText, -delta).replace(/(#|b)/g, '<sup>$&</sup>');
         }
       };
-      newFunctionDiv.querySelector('.capo-button.decrease').onclick = transposeEvent(-1);
-      newFunctionDiv.querySelector('.capo-button.increase').onclick = transposeEvent(1);
+      newFunctionDiv.querySelector('.capo-button.decrease').onclick = () => { transposeEvent(-1) };
+      newFunctionDiv.querySelector('.capo-button.increase').onclick = () => { transposeEvent(1) };
       document.querySelector('.setint').appendChild(newFunctionDiv);
     }
   }
