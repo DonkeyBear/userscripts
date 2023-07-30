@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.97.2
+// @version      0.97.3
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -17,7 +17,45 @@ if (currentUrl.match(/\/song\//)) {
   window.location.replace(newUrl);
 }
 
-document.querySelector('html').style.backgroundColor = '#f7f7f7';
+const stylesheet = /* css */`
+  html {
+    background: #fafafa url(/templets/pu/images/tone-bg.gif); 
+  }
+
+  header {
+    display: flex;
+    justify-content: center;
+    font-family: system-ui;
+  }
+
+  header > .set {
+    width: 768px;
+  }
+
+  /* 需要倒數才能關閉的蓋版廣告 */
+  #viptoneWindow.window,
+  /* 在頁面最底部的廣告 */
+  #bottomad,
+  /* 最上方提醒升級VIP的廣告 */
+  .update_vip_bar,
+  /* 譜上的LOGO和浮水印 */
+  .wmask,
+  /* 彈出式頁尾 */
+  footer,
+  /* 自動滾動頁面捲軸 */
+  .autoscroll,
+  /* 頁首的返回列 */
+  .backplace,
+  /* 頁首的Key選項 */
+  .set .keys,
+  /* 其餘的Google廣告 */
+  .adsbygoogle {
+    display: none !important;
+  }
+`;
+const style = document.createElement('style');
+style.innerText = stylesheet;
+document.head.appendChild(style);
 
 const observerCheckList = {
   modifyTitle: false,
@@ -29,42 +67,6 @@ const observerCheckList = {
 };
 
 const observer = new MutationObserver(() => {
-  /* 隱藏網頁元素 */
-  const elementShouldBlock = {
-    // 需要倒數才能關閉的蓋版廣告
-    modalAd: document.querySelector('#viptoneWindow.window'),
-    // 在頁面最底部的廣告
-    bottomAd: document.querySelector('#bottomad'),
-    // 最上方提醒升級VIP的廣告
-    updateVipBar: document.querySelector('.update_vip_bar'),
-    // 譜上的LOGO和浮水印
-    overlayLogo: document.querySelector('.wmask'),
-    // 彈出式頁尾
-    footer: document.querySelector('footer'),
-    // 自動滾動頁面捲軸
-    autoScroll: document.querySelector('.autoscroll'),
-    // 頁首的返回列
-    headerBackplace: document.querySelector('.backplace'),
-    // 頁首的Key選項
-    keys: document.querySelector('.set .keys'),
-    // 其餘的Google廣告
-    adsByGoogle: document.querySelectorAll('.adsbygoogle')
-  };
-  for (const selected in elementShouldBlock) {
-    // 將上述元素隱藏
-    if (elementShouldBlock[selected]) {
-      if (elementShouldBlock[selected].length === undefined) {
-        // Node
-        elementShouldBlock[selected].style.display = 'none';
-      } else {
-        // NodeList
-        for (const elem of elementShouldBlock[selected]) {
-          elem.style.display = 'none';
-        }
-      }
-    }
-  }
-
   /* 修改頁首功能鈕（下排） */
   if (!observerCheckList.modifyHeaderFunction) {
     if (document.querySelectorAll('.setint .hr').length === 6) {
