@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.97.9a
+// @version      0.97.9b
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -96,6 +96,10 @@ const stylesheet = /* css */`
   .set .keys,
   .set .plays,
   .set .clear,
+  /* 功能列上多餘的按鈕 */
+  .setint .hr:nth-child(4),
+  .setint .hr:nth-child(5),
+  .setint .hr:nth-child(6),
   /* 其餘的Google廣告 */
   .adsbygoogle {
     display: none !important;
