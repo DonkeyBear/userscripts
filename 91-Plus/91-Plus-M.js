@@ -1,18 +1,18 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.98.0
+// @version      0.100.0
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
 // @match        https://www.91pu.com.tw/song/*
-// @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
+// @icon         https://www.91pu.com.tw/icons/favicon-32x32.png
 // @grant        none
 // ==/UserScript==
 
 const currentUrl = window.location.href;
 if (currentUrl.match(/\/song\//)) {
-  const sheetId = currentUrl.match(/\/\d*\./)[0].slice(1, -1);
+  const sheetId = currentUrl.match(/(?<=\/)\d+(?=\.)/)[0];
   const newUrl = `https://www.91pu.com.tw/m/tone.shtml?id=${sheetId}`;
   window.location.replace(newUrl);
 }
@@ -109,10 +109,37 @@ const style = document.createElement('style');
 style.innerText = stylesheet;
 document.head.appendChild(style);
 
+class Chord {
+  sharps = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  flats = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+
+  constructor (chordString) {
+    this.chordString = chordString;
+    return this;
+  }
+
+  transpose (delta = 0) {
+    this.chordString = this.chordString.replaceAll(/[A-G][#|b]?/g, (note) => {
+      const isSharp = this.sharps.includes(note);
+      const scale = isSharp ? this.sharps : this.flats;
+      const noteIndex = scale.indexOf(note);
+      const transposedIndex = (noteIndex + delta + 12) % 12;
+      const transposedChord = scale[transposedIndex];
+      return transposedChord;
+    });
+    return this;
+  }
+
+  text () {
+    return this.chordString;
+  }
+}
+
 const observerCheckList = {
   modifyTitle: false,
   // modifyHeaderFunction: false,
-  modifyTransposeButton: false
+  modifyTransposeButton: false,
+  archiveChordSheet: false
 };
 
 const observer = new MutationObserver(() => {
@@ -164,91 +191,68 @@ const observer = new MutationObserver(() => {
       newFunctionDiv.innerHTML = /* html */`
         <button class="scf capo-button decrease">◀</button>
         <button class="scf capo-button info">
-          CAPO：<span class="text-capo">${stringCapo}</span>（<span class="text-key">${stringKey.replace(/(#|b)/g, '<sup>$&</sup>')}</span>）
+          CAPO：<span class="text-capo">${stringCapo}</span>（<span class="text-key">${stringKey.replaceAll(/(#|b)/g, '<sup>$&</sup>')}</span>）
         </button>
         <button class="scf capo-button increase">▶</button>
       `;
       const spanCapo = newFunctionDiv.querySelector('.text-capo');
       const spanKey = newFunctionDiv.querySelector('.text-key');
       const orginalCapo = Number(spanCapo.innerText);
-      function transposeEvent (delta) {
-        spanCapo.innerText = Number(spanCapo.innerText) + delta;
-        spanKey.innerHTML = transpose(spanKey.innerText, -delta).replace(/(#|b)/g, '<sup>$&</sup>');
-
+      function transposeSheet (delta) {
+        spanCapo.innerText = (Number(spanCapo.innerText) + delta) % 12;
+        const keyName = new Chord(spanKey.innerText);
+        spanKey.innerHTML = keyName.transpose(-delta).text().replaceAll(/(#|b)/g, '<sup>$&</sup>');
         for (const chordEl of document.querySelectorAll('#tone_z .tf')) {
-          chordEl.innerHTML = transpose(chordEl.innerText, -delta).replace(/(#|b)/g, '<sup>$&</sup>');
+          const chord = new Chord(chordEl.innerText);
+          chordEl.innerHTML = chord.transpose(-delta).text().replaceAll(/(#|b)/g, '<sup>$&</sup>');
         }
       };
-      newFunctionDiv.querySelector('.capo-button.decrease').onclick = () => { transposeEvent(-1) };
-      newFunctionDiv.querySelector('.capo-button.increase').onclick = () => { transposeEvent(1) };
+      newFunctionDiv.querySelector('.capo-button.decrease').onclick = () => { transposeSheet(-1) };
+      newFunctionDiv.querySelector('.capo-button.increase').onclick = () => { transposeSheet(1) };
       newFunctionDiv.querySelector('.capo-button.info').onclick = () => {
-        transposeEvent(orginalCapo - Number(spanCapo.innerText));
+        transposeSheet(orginalCapo - Number(spanCapo.innerText));
       };
       document.querySelector('.setint').appendChild(newFunctionDiv);
+    }
+  }
+
+  /* 發送請求至 API，雲端備份樂譜 */
+  if (!observerCheckList.archiveChordSheet) {
+    const sheet = document.getElementById('tone_z');
+    if (sheet) {
+      observerCheckList.archiveChordSheet = true;
+      const underlineEl = sheet.querySelectorAll('u');
+      for (const u of underlineEl) { u.innerText = `{_${u.innerText}_}` }
+      const urlParams = new URLSearchParams(window.location.search);
+      const formBody = {
+        id: Number(urlParams.get('id')),
+        title: document.getElementById('mtitle').innerText.trim(),
+        key: document.querySelector('.tkinfo').innerText.match(/(?<=原調：)\w*/)[0],
+        play: document.querySelector('.capo .select').innerText.split(' / ')[1],
+        capo: Number(document.querySelector('.capo .select').innerText.split(' / ')[0]),
+        singer: document.querySelector('.tinfo').innerText.match(/(?<=演唱：).*(?=(\n|$))/)[0].trim(),
+        composer: document.querySelector('.tinfo').innerText.match(/(?<=曲：).*?(?=(詞：|$))/)[0].trim(),
+        lyricist: document.querySelector('.tinfo').innerText.match(/(?<=詞：).*?(?=(曲：|$))/)[0].trim(),
+        bpm: Number(document.querySelector('.tkinfo')?.innerText.match(/\d+/)[0]),
+        sheet_text:
+          sheet.innerText
+            .replaceAll(/\s+?\n/g, '\n')
+            .replaceAll('\n\n', '\n')
+            .trim()
+            .replaceAll(/\s+/g, (match) => { return `{%${match.length}%}` })
+      };
+      for (const u of underlineEl) { u.innerText = u.innerText.replaceAll(/{_|_}/g, '') }
+      fetch('https://91-plus-plus-api.fly.dev/archive', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formBody)
+      })
+        .then(() => { console.log('91 Plus 已完成雲端樂譜紀錄！') })
+        .catch(error => { console.error(error) });
     }
   }
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
-
-function transpose (chord, transposeValue) {
-  const keys = {
-    C: '[I]',
-    'C#': '[I#]',
-    D: '[II]',
-    'D#': '[II#]',
-    E: '[III]',
-    F: '[IV]',
-    'F#': '[IV#]',
-    G: '[V]',
-    'G#': '[V#]',
-    A: '[VI]',
-    'A#': '[VI#]',
-    B: '[VII]'
-  };
-
-  const pitchNameFix = {
-    '#b': '',
-    'b#': '',
-    'E#': 'F',
-    Fb: 'E',
-    'B#': 'C',
-    Cb: 'B',
-    'C##': 'D',
-    'D##': 'E',
-    'F##': 'G',
-    'G##': 'A',
-    'A##': 'B'
-  };
-
-  let resultChord = chord;
-
-  for (let i = 0; i < 12; i++) {
-    // first, transpose to Roman number.
-    resultChord = resultChord.replaceAll(
-      Object.keys(keys)[i],
-      Object.values(keys)[i]
-    );
-  }
-
-  for (let i = 0; i < 12; i++) {
-    // transpose offset
-    let fixedTransposeValue = (i + transposeValue) % 12;
-    if (fixedTransposeValue < 0) { fixedTransposeValue += 12 }
-    // second, transpose to pitch names.
-    resultChord = resultChord.replaceAll(
-      Object.values(keys)[i],
-      Object.keys(keys)[fixedTransposeValue]
-    );
-  }
-
-  for (let i = 0; i < 11; i++) {
-    // fix illegal pitch names.
-    resultChord = resultChord.replaceAll(
-      Object.keys(pitchNameFix)[i],
-      Object.values(pitchNameFix)[i]
-    );
-  }
-
-  return resultChord;
-}
