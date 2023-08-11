@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.100.0
+// @version      0.100.1
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -224,16 +224,22 @@ const observer = new MutationObserver(() => {
       const underlineEl = sheet.querySelectorAll('u');
       for (const u of underlineEl) { u.innerText = `{_${u.innerText}_}` }
       const urlParams = new URLSearchParams(window.location.search);
+      const selectors = {
+        mtitle: document.getElementById('mtitle'),
+        tkinfo: document.querySelector('.tkinfo'),
+        capoSelect: document.querySelector('.capo .select'),
+        tinfo: document.querySelector('.tinfo')
+      };
       const formBody = {
         id: Number(urlParams.get('id')),
-        title: document.getElementById('mtitle').innerText.trim(),
-        key: document.querySelector('.tkinfo').innerText.match(/(?<=原調：)\w*/)[0],
-        play: document.querySelector('.capo .select').innerText.split(' / ')[1],
-        capo: Number(document.querySelector('.capo .select').innerText.split(' / ')[0]),
-        singer: document.querySelector('.tinfo').innerText.match(/(?<=演唱：).*(?=(\n|$))/)[0].trim(),
-        composer: document.querySelector('.tinfo').innerText.match(/(?<=曲：).*?(?=(詞：|$))/)[0].trim(),
-        lyricist: document.querySelector('.tinfo').innerText.match(/(?<=詞：).*?(?=(曲：|$))/)[0].trim(),
-        bpm: Number(document.querySelector('.tkinfo')?.innerText.match(/\d+/)[0]),
+        title: selectors.mtitle.innerText.trim(),
+        key: selectors.tkinfo.innerText.match(/(?<=原調：)\w*/)[0],
+        play: selectors.capoSelect.innerText.split(' / ')[1],
+        capo: Number(selectors.capoSelect.innerText.split(' / ')[0]),
+        singer: selectors.tinfo.innerText.match(/(?<=演唱：).*(?=(\n|$))/) ? selectors.tinfo.innerText.match(/(?<=演唱：).*(?=(\n|$))/)[0].trim() : '',
+        composer: selectors.tinfo.innerText.match(/(?<=曲：).*?(?=(詞：|$))/) ? selectors.tinfo.innerText.match(/(?<=曲：).*?(?=(詞：|$))/)[0].trim() : '',
+        lyricist: selectors.tinfo.innerText.match(/(?<=詞：).*?(?=(曲：|$))/) ? selectors.tinfo.innerText.match(/(?<=詞：).*?(?=(曲：|$))/)[0].trim() : '',
+        bpm: selectors.tkinfo?.innerText.match(/\d+/) ? Number(selectors.tkinfo.innerText.match(/\d+/)[0]) : 0,
         sheet_text:
           sheet.innerText
             .replaceAll(/\s+?\n/g, '\n')
