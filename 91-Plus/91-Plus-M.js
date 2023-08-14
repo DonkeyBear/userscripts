@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.100.4
+// @version      0.100.5
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -195,10 +195,11 @@ const observer = new MutationObserver(() => {
 
   /* 刪除內建的移調鈕，建立自製的 */
   if (!observerCheckList.modifyTransposeButton) {
-    if (document.querySelector('.capo .select')) {
+    const capoSelect = document.querySelector('.capo .select');
+    if (capoSelect?.innerText.trim()) {
       observerCheckList.modifyTransposeButton = true;
-      const stringCapo = document.querySelector('.capo .select').innerText.split(' / ')[0]; // CAPO
-      const stringKey = document.querySelector('.capo .select').innerText.split(' / ')[1]; // 調
+      const stringCapo = capoSelect.innerText.split(' / ')[0]; // CAPO
+      const stringKey = capoSelect.innerText.split(' / ')[1]; // 調
 
       // 新增功能鈕
       const newFunctionDiv = document.createElement('div');
@@ -236,42 +237,54 @@ const observer = new MutationObserver(() => {
     const sheet = document.getElementById('tone_z');
     if (sheet?.innerText.trim()) {
       observerCheckList.archiveChordSheet = true;
-      const underlineEl = sheet.querySelectorAll('u');
-      for (const u of underlineEl) { u.innerText = `{_${u.innerText}_}` }
       const urlParams = new URLSearchParams(window.location.search);
-      const selectors = {
-        mtitle: document.getElementById('mtitle'),
-        tkinfo: document.querySelector('.tkinfo'),
-        capoSelect: document.querySelector('.capo .select'),
-        tinfo: document.querySelector('.tinfo')
-      };
-      const formBody = {
-        id: Number(urlParams.get('id')),
-        title: selectors.mtitle.innerText.trim(),
-        key: selectors.tkinfo.innerText.match(/(?<=原調：)\w*/)[0],
-        play: selectors.capoSelect.innerText.split(' / ')[1],
-        capo: Number(selectors.capoSelect.innerText.split(' / ')[0]),
-        singer: selectors.tinfo.innerText.match(/(?<=演唱：).*(?=(\n|$))/) ? selectors.tinfo.innerText.match(/(?<=演唱：).*(?=(\n|$))/)[0].trim() : '',
-        composer: selectors.tinfo.innerText.match(/(?<=曲：).*?(?=(詞：|$))/) ? selectors.tinfo.innerText.match(/(?<=曲：).*?(?=(詞：|$))/)[0].trim() : '',
-        lyricist: selectors.tinfo.innerText.match(/(?<=詞：).*?(?=(曲：|$))/) ? selectors.tinfo.innerText.match(/(?<=詞：).*?(?=(曲：|$))/)[0].trim() : '',
-        bpm: selectors.tkinfo?.innerText.match(/\d+/) ? Number(selectors.tkinfo.innerText.match(/\d+/)[0]) : 0,
-        sheet_text:
+      try {
+        const underlineEl = sheet.querySelectorAll('u');
+        for (const u of underlineEl) { u.innerText = `{_${u.innerText}_}` }
+        const selectors = {
+          mtitle: document.getElementById('mtitle'),
+          tkinfo: document.querySelector('.tkinfo'),
+          capoSelect: document.querySelector('.capo .select'),
+          tinfo: document.querySelector('.tinfo')
+        };
+        const formBody = {
+          id: Number(urlParams.get('id')),
+          title: selectors.mtitle.innerText.trim(),
+          key: selectors.tkinfo.innerText.match(/(?<=原調：)\w*/)[0],
+          play: selectors.capoSelect.innerText.split(' / ')[1],
+          capo: Number(selectors.capoSelect.innerText.split(' / ')[0]),
+          singer:
+          selectors.tinfo.innerText.match(/(?<=演唱：).*(?=(\n|$))/) ? selectors.tinfo.innerText.match(/(?<=演唱：).*(?=(\n|$))/)[0].trim() : '',
+          composer:
+          selectors.tinfo.innerText.match(/(?<=曲：).*?(?=(詞：|$))/) ? selectors.tinfo.innerText.match(/(?<=曲：).*?(?=(詞：|$))/)[0].trim() : '',
+          lyricist:
+          selectors.tinfo.innerText.match(/(?<=詞：).*?(?=(曲：|$))/) ? selectors.tinfo.innerText.match(/(?<=詞：).*?(?=(曲：|$))/)[0].trim() : '',
+          bpm:
+          selectors.tkinfo?.innerText.match(/\d+/) ? Number(selectors.tkinfo.innerText.match(/\d+/)[0]) : 0,
+          sheet_text:
           sheet.innerText
             .replaceAll(/\s+?\n/g, '\n')
             .replaceAll('\n\n', '\n')
             .trim()
             .replaceAll(/\s+/g, (match) => { return `{%${match.length}%}` })
-      };
-      for (const u of underlineEl) { u.innerText = u.innerText.replaceAll(/{_|_}/g, '') }
-      fetch('https://91-plus-plus-api.fly.dev/archive', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formBody)
-      })
-        .then(() => { console.log('91 Plus 已完成雲端樂譜紀錄！') })
-        .catch(error => { console.error(error) });
+        };
+        for (const u of underlineEl) {
+          u.innerHTML = u.innerText
+            .replaceAll(/{_|_}/g, '')
+            .replaceAll(/[a-zA-Z0-9]+/g, '<span class="tf">$&</span>');
+        }
+        fetch('https://91-plus-plus-api.fly.dev/archive', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formBody)
+        })
+          .then(response => { console.log(response) })
+          .catch(error => { console.error(error) });
+      } catch {
+        fetch(`https://91-plus-plus-api.fly.dev/report?id=${urlParams.get('id')}`);
+      }
     }
   }
 });
