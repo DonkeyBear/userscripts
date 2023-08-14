@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.100.1
+// @version      0.100.2
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -110,8 +110,8 @@ style.innerText = stylesheet;
 document.head.appendChild(style);
 
 class Chord {
-  sharps = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  flats = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+  static sharps = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  static flats = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 
   constructor (chordString) {
     this.chordString = chordString;
@@ -119,13 +119,13 @@ class Chord {
   }
 
   transpose (delta = 0) {
-    this.chordString = this.chordString.replaceAll(/[A-G][#|b]?/g, (note) => {
+    this.chordString = this.chordString.replaceAll(/[A-G][#b]?/g, (note) => {
       const isSharp = this.sharps.includes(note);
       const scale = isSharp ? this.sharps : this.flats;
       const noteIndex = scale.indexOf(note);
       const transposedIndex = (noteIndex + delta + 12) % 12;
-      const transposedChord = scale[transposedIndex];
-      return transposedChord;
+      const transposedNote = scale[transposedIndex];
+      return transposedNote;
     });
     return this;
   }
@@ -219,7 +219,7 @@ const observer = new MutationObserver(() => {
   /* 發送請求至 API，雲端備份樂譜 */
   if (!observerCheckList.archiveChordSheet) {
     const sheet = document.getElementById('tone_z');
-    if (sheet) {
+    if (sheet?.innerText.trim()) {
       observerCheckList.archiveChordSheet = true;
       const underlineEl = sheet.querySelectorAll('u');
       for (const u of underlineEl) { u.innerText = `{_${u.innerText}_}` }
