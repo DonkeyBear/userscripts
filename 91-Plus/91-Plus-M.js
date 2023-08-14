@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.100.2
+// @version      0.100.3
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -10,6 +10,7 @@
 // @grant        none
 // ==/UserScript==
 
+/* 若樂譜頁面為電腦版，切換為行動版 */
 const currentUrl = window.location.href;
 if (currentUrl.match(/\/song\//)) {
   const sheetId = currentUrl.match(/(?<=\/)\d+(?=\.)/)[0];
@@ -17,6 +18,19 @@ if (currentUrl.match(/\/song\//)) {
   window.location.replace(newUrl);
 }
 
+/* 引入 Google Analytics */
+const googleAnalyticsScript = document.createElement('script');
+googleAnalyticsScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-JF4S3HZY31';
+googleAnalyticsScript.async = true;
+document.head.appendChild(googleAnalyticsScript);
+googleAnalyticsScript.onload = () => {
+  window.dataLayer = window.dataLayer || [];
+  function gtag () { window.dataLayer.push(arguments) }
+  gtag('js', new Date());
+  gtag('config', 'G-JF4S3HZY31');
+};
+
+/* 修改頁面樣式 */
 const stylesheet = /* css */`
   html {
     background: #fafafa url(/templets/pu/images/tone-bg.gif); 
@@ -109,6 +123,7 @@ const style = document.createElement('style');
 style.innerText = stylesheet;
 document.head.appendChild(style);
 
+/* 增加 Chord Class，用於操作和弦字串 */
 class Chord {
   static sharps = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   static flats = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
