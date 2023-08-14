@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.100.3
+// @version      0.100.4
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -135,8 +135,8 @@ class Chord {
 
   transpose (delta = 0) {
     this.chordString = this.chordString.replaceAll(/[A-G][#b]?/g, (note) => {
-      const isSharp = this.sharps.includes(note);
-      const scale = isSharp ? this.sharps : this.flats;
+      const isSharp = Chord.sharps.includes(note);
+      const scale = isSharp ? Chord.sharps : Chord.flats;
       const noteIndex = scale.indexOf(note);
       const transposedIndex = (noteIndex + delta + 12) % 12;
       const transposedNote = scale[transposedIndex];
