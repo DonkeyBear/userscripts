@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.100.5
+// @version      0.100.6
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -123,14 +123,13 @@ const style = document.createElement('style');
 style.innerText = stylesheet;
 document.head.appendChild(style);
 
-/* 增加 Chord Class，用於操作和弦字串 */
+/* 用於操作和弦字串 */
 class Chord {
   static sharps = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   static flats = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 
   constructor (chordString) {
     this.chordString = chordString;
-    return this;
   }
 
   transpose (delta = 0) {
@@ -147,6 +146,109 @@ class Chord {
 
   text () {
     return this.chordString;
+  }
+}
+
+/* 用於修改樂譜 */
+class ChordSheetElement {
+  constructor (chordSheetElement) {
+    this.chordSheetElement = chordSheetElement;
+  }
+
+  formatUnderlines () {
+    const underlineEl = this.chordSheetElement.querySelectorAll('u');
+    const doubleUnderlineEl = this.chordSheetElement.querySelectorAll('abbr');
+    underlineEl.forEach((el) => { el.innerText = `{_${el.innerText}_}` });
+    doubleUnderlineEl.forEach((el) => { el.innerText = `{=${el.innerText}=}` });
+    return this;
+  }
+
+  deformatUnderlines () {
+    const underlineEl = this.chordSheetElement.querySelectorAll('u');
+    const doubleUnderlineEl = this.chordSheetElement.querySelectorAll('abbr');
+    const deformat = (nodeList) => {
+      nodeList.forEach((el) => {
+        el.innerHTML = el.innerText
+          .replaceAll(/{_|{=|=}|_}/g, '')
+          .replaceAll(/[a-zA-Z0-9#b/]+/g, '<span class="tf">$&</span>');
+      });
+    };
+    deformat(underlineEl);
+    deformat(doubleUnderlineEl);
+    return this;
+  }
+}
+
+/* 用於取得樂譜相關資訊 */
+class ChordSheetDocument {
+  constructor () {
+    this.el = {
+      mtitle: document.getElementById('mtitle'),
+      tkinfo: document.querySelector('.tkinfo'),
+      capoSelect: document.querySelector('.capo .select'),
+      tinfo: document.querySelector('.tinfo'),
+      tone_z: document.getElementById('tone_z')
+    };
+  }
+
+  getId () {
+    const urlParams = new URLSearchParams(window.location.search);
+    return Number(urlParams.get('id'));
+  }
+
+  getTitle () {
+    return this.el.mtitle.innerText.trim();
+  }
+
+  getKey () {
+    const match = this.el.tkinfo?.innerText.match(/(?<=原調：)\w*/);
+    if (!match) { return '' }
+    return match[0].trim();
+  }
+
+  getPlay () {
+    const match = this.el.capoSelect?.innerText.split(/\s*\/\s*/);
+    if (!match) { return '' }
+    return match[1].trim();
+  }
+
+  getCapo () {
+    const match = this.el.capoSelect?.innerText.split(/\s*\/\s*/);
+    if (!match) { return 0 }
+    return Number(match[0]);
+  }
+
+  getSinger () {
+    const match = this.el.tinfo?.innerText.match(/(?<=演唱：).*(?=\n|$)/);
+    if (!match) { return '' }
+    return match[0].trim();
+  }
+
+  getComposer () {
+    const match = this.el.tinfo?.innerText.match(/(?<=曲：).*?(?=詞：|$)/);
+    if (!match) { return '' }
+    return match[0].trim();
+  }
+
+  getLyricist () {
+    const match = this.el.tinfo?.innerText.match(/(?<=詞：).*?(?=曲：|$)/);
+    if (!match) { return '' }
+    return match[0].trim();
+  }
+
+  getBpm () {
+    const match = this.el.tkinfo?.innerText.match(/\d+/);
+    if (!match) { return 0 }
+    return Number(match[0]);
+  }
+
+  getSheetText () {
+    const formattedChordSheet = this.el.tone_z.innerText
+      .replaceAll(/\s+?\n/g, '\n')
+      .replaceAll('\n\n', '\n')
+      .trim()
+      .replaceAll(/\s+/g, (match) => { return `{%${match.length}%}` });
+    return formattedChordSheet;
   }
 }
 
@@ -237,42 +339,25 @@ const observer = new MutationObserver(() => {
     const sheet = document.getElementById('tone_z');
     if (sheet?.innerText.trim()) {
       observerCheckList.archiveChordSheet = true;
-      const urlParams = new URLSearchParams(window.location.search);
+      const chordSheetDocument = new ChordSheetDocument();
       try {
-        const underlineEl = sheet.querySelectorAll('u');
-        for (const u of underlineEl) { u.innerText = `{_${u.innerText}_}` }
-        const selectors = {
-          mtitle: document.getElementById('mtitle'),
-          tkinfo: document.querySelector('.tkinfo'),
-          capoSelect: document.querySelector('.capo .select'),
-          tinfo: document.querySelector('.tinfo')
-        };
+        const chordSheetElement = new ChordSheetElement(sheet);
+        chordSheetElement.formatUnderlines();
+
         const formBody = {
-          id: Number(urlParams.get('id')),
-          title: selectors.mtitle.innerText.trim(),
-          key: selectors.tkinfo.innerText.match(/(?<=原調：)\w*/)[0],
-          play: selectors.capoSelect.innerText.split(' / ')[1],
-          capo: Number(selectors.capoSelect.innerText.split(' / ')[0]),
-          singer:
-          selectors.tinfo.innerText.match(/(?<=演唱：).*(?=(\n|$))/) ? selectors.tinfo.innerText.match(/(?<=演唱：).*(?=(\n|$))/)[0].trim() : '',
-          composer:
-          selectors.tinfo.innerText.match(/(?<=曲：).*?(?=(詞：|$))/) ? selectors.tinfo.innerText.match(/(?<=曲：).*?(?=(詞：|$))/)[0].trim() : '',
-          lyricist:
-          selectors.tinfo.innerText.match(/(?<=詞：).*?(?=(曲：|$))/) ? selectors.tinfo.innerText.match(/(?<=詞：).*?(?=(曲：|$))/)[0].trim() : '',
-          bpm:
-          selectors.tkinfo?.innerText.match(/\d+/) ? Number(selectors.tkinfo.innerText.match(/\d+/)[0]) : 0,
-          sheet_text:
-          sheet.innerText
-            .replaceAll(/\s+?\n/g, '\n')
-            .replaceAll('\n\n', '\n')
-            .trim()
-            .replaceAll(/\s+/g, (match) => { return `{%${match.length}%}` })
+          id: chordSheetDocument.getId(),
+          title: chordSheetDocument.getTitle(),
+          key: chordSheetDocument.getKey(),
+          play: chordSheetDocument.getPlay(),
+          capo: chordSheetDocument.getCapo(),
+          singer: chordSheetDocument.getSinger(),
+          composer: chordSheetDocument.getComposer(),
+          lyricist: chordSheetDocument.getLyricist(),
+          bpm: chordSheetDocument.getBpm(),
+          sheet_text: chordSheetDocument.getSheetText()
         };
-        for (const u of underlineEl) {
-          u.innerHTML = u.innerText
-            .replaceAll(/{_|_}/g, '')
-            .replaceAll(/[a-zA-Z0-9]+/g, '<span class="tf">$&</span>');
-        }
+        chordSheetElement.deformatUnderlines();
+
         fetch('https://91-plus-plus-api.fly.dev/archive', {
           method: 'POST',
           headers: {
@@ -283,7 +368,7 @@ const observer = new MutationObserver(() => {
           .then(response => { console.log(response) })
           .catch(error => { console.error(error) });
       } catch {
-        fetch(`https://91-plus-plus-api.fly.dev/report?id=${urlParams.get('id')}`);
+        fetch(`https://91-plus-plus-api.fly.dev/report?id=${chordSheetDocument.getId()}`);
       }
     }
   }
