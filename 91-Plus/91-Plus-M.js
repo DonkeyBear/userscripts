@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.100.6
+// @version      0.100.7
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -170,7 +170,7 @@ class ChordSheetElement {
       nodeList.forEach((el) => {
         el.innerHTML = el.innerText
           .replaceAll(/{_|{=|=}|_}/g, '')
-          .replaceAll(/[a-zA-Z0-9#b/]+/g, '<span class="tf">$&</span>');
+          .replaceAll(/[a-zA-Z0-9#/]+/g, '<span class="tf">$&</span>');
       });
     };
     deformat(underlineEl);
@@ -300,8 +300,8 @@ const observer = new MutationObserver(() => {
     const capoSelect = document.querySelector('.capo .select');
     if (capoSelect?.innerText.trim()) {
       observerCheckList.modifyTransposeButton = true;
-      const stringCapo = capoSelect.innerText.split(' / ')[0]; // CAPO
-      const stringKey = capoSelect.innerText.split(' / ')[1]; // 調
+      const stringCapo = capoSelect.innerText.split(/\s*\/\s*/)[0]; // CAPO
+      const stringKey = capoSelect.innerText.split(/\s*\/\s*/)[1]; // 調
 
       // 新增功能鈕
       const newFunctionDiv = document.createElement('div');
@@ -309,7 +309,7 @@ const observer = new MutationObserver(() => {
       newFunctionDiv.innerHTML = /* html */`
         <button class="scf capo-button decrease">◀</button>
         <button class="scf capo-button info">
-          CAPO：<span class="text-capo">${stringCapo}</span>（<span class="text-key">${stringKey.replaceAll(/(#|b)/g, '<sup>$&</sup>')}</span>）
+          CAPO：<span class="text-capo">${stringCapo}</span>（<span class="text-key">${stringKey.replaceAll(/[#b]/g, '<sup>$&</sup>')}</span>）
         </button>
         <button class="scf capo-button increase">▶</button>
       `;
@@ -319,10 +319,10 @@ const observer = new MutationObserver(() => {
       function transposeSheet (delta) {
         spanCapo.innerText = (Number(spanCapo.innerText) + delta) % 12;
         const keyName = new Chord(spanKey.innerText);
-        spanKey.innerHTML = keyName.transpose(-delta).text().replaceAll(/(#|b)/g, '<sup>$&</sup>');
+        spanKey.innerHTML = keyName.transpose(-delta).text().replaceAll(/[#b]/g, '<sup>$&</sup>');
         for (const chordEl of document.querySelectorAll('#tone_z .tf')) {
           const chord = new Chord(chordEl.innerText);
-          chordEl.innerHTML = chord.transpose(-delta).text().replaceAll(/(#|b)/g, '<sup>$&</sup>');
+          chordEl.innerHTML = chord.transpose(-delta).text().replaceAll(/[#b]/g, '<sup>$&</sup>');
         }
       };
       newFunctionDiv.querySelector('.capo-button.decrease').onclick = () => { transposeSheet(-1) };
