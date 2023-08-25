@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         巴哈姆特勇者福利社++
 // @namespace    https://github.com/DonkeyBear
-// @version      0.7.5
+// @version      0.7.6
 // @description  改進巴哈姆特的勇者福利社，動態載入全部商品、加入過濾隱藏功能、標示競標目前出價等。
 // @author       DonkeyBear
 // @match        https://fuli.gamer.com.tw/shop.php*
@@ -9,12 +9,30 @@
 // @grant        none
 // ==/UserScript==
 
+const darkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+
 const stylesheet = /* css */`
+  #BH-wrapper {
+    padding-top: 0;
+  }
+
+  #tabs-btn-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
   .tabs-btn-box {
     margin-top: 0;
   }
   a.btn-distance.fuli-enhance {
+    width: auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  a.btn-distance.fuli-enhance:not(:first-child) {
     border-left: 1px solid;
+    ${darkMode ? 'border-color: #444444;' : ''};
   }
   a.btn-distance.fuli-enhance > [type=checkbox] {
     margin-right: .15rem;
@@ -62,71 +80,106 @@ const TYPE_TAG = {
   lottery: '抽抽樂'
 };
 
-function setupButton (labelText, keywordToHide, checkboxId) {
-  const newFunctionButton = document.createElement('a');
-  newFunctionButton.classList.add('flex-center', 'btn-distance', 'fuli-enhance');
-  const newCheckbox = document.createElement('input');
-  newCheckbox.id = checkboxId;
-  newCheckbox.type = 'checkbox';
-  newCheckbox.onchange = (e) => { toggleItemCards(keywordToHide, e.target.checked) };
-  const newLabel = document.createElement('label');
-  newLabel.setAttribute('for', checkboxId);
-  newLabel.innerText = labelText;
-  newFunctionButton.appendChild(newCheckbox);
-  newFunctionButton.appendChild(newLabel);
-  document.querySelector('.tabs-btn-box').appendChild(newFunctionButton);
+class ItemCard {
+  constructor (itemCard) {
+    this.itemCard = itemCard;
+    this.type = itemCard.querySelector('.type-tag').innerText.trim();
+  }
+
+  fetchCurrentBid () {
+    if (this.itemCard.querySelector('.type-tag').innerText !== TYPE_TAG.bid) { return this } // 若非競標品則結束函式
+    const priceElement = this.itemCard.querySelector('.price');
+    priceElement.innerText = '正在讀取目前出價';
+    fetch(this.itemCard.href, { method: 'GET' })
+      .then(res => res.text())
+      .then(data => {
+        const parser = new DOMParser();
+        const virtualDoc = parser.parseFromString(data, 'text/html');
+
+        let currentBid;
+        for (const item of virtualDoc.querySelectorAll('.pbox-content')) {
+          if (!item.innerText.includes('目前出價')) { continue }
+          currentBid = item.querySelector('.pbox-content-r').innerText.match(/[\d|,]+/)[0];
+          break;
+        }
+        const newTextHTML = /* html */`目前出價<p class="digital current-bid">${currentBid}</p>巴幣`;
+        priceElement.innerHTML = newTextHTML;
+        this.colorPriceTag();
+      })
+      .catch(() => {
+        priceElement.innerText = '讀取出價失敗！';
+      });
+  }
+
+  colorPriceTag () {
+    const priceNumberElement = this.itemCard.querySelector('.digital');
+    const price = Number(priceNumberElement.innerText.replaceAll(/\D/, ''));
+    if (DEPOSIT < price) { priceNumberElement.classList.add('unaffordable') }
+  }
+
+  registerCard () {
+    // 依照商品卡種類，增加計數和取得目前出價
+    switch (this.type) {
+      case TYPE_TAG.exchange:
+        exchangeItemCounter.innerText++;
+        break;
+      case TYPE_TAG.bid:
+        bidItemCounter.innerText++;
+        this.fetchCurrentBid(); // 取得競標類商品的目前出價並標示於商品卡
+        break;
+      case TYPE_TAG.lottery:
+        lotteryItemCounter.innerText++;
+        break;
+    }
+  }
 }
 
-function toggleItemCards (keywaord, hide) {
+function toggleItemCards (keyword, hide) {
   const cards = document.querySelectorAll('a.items-card');
   for (const card of cards) {
-    if (card.querySelector('.type-tag').innerText.includes(keywaord)) {
+    if (card.querySelector('.type-tag').innerText.includes(keyword)) {
       hide ? card.classList.add('d-none') : card.classList.remove('d-none');
     }
   }
 }
 
-function getCurrentBid (itemsCardElement) {
-  if (itemsCardElement.querySelector('.type-tag').innerText !== TYPE_TAG.bid) { return } // 若非競標品則結束函式
-  fetch(itemsCardElement.href, { method: 'GET' })
-    .then(res => res.text())
-    .then(data => {
-      const parser = new DOMParser();
-      const virtualDoc = parser.parseFromString(data, 'text/html');
-
-      let currentBid;
-      for (const item of virtualDoc.querySelectorAll('.pbox-content')) {
-        if (!item.innerText.includes('目前出價')) { continue }
-        currentBid = item.querySelector('.pbox-content-r').innerText.match(/[\d|,]+/)[0];
-        break;
-      }
-      const newTextHTML = /* html */`目前出價<p class="digital current-bid">${currentBid}</p>巴幣`;
-      itemsCardElement.querySelector('.price').innerHTML = newTextHTML;
-      colorPriceTag(itemsCardElement);
-    });
-}
-
-function colorPriceTag (itemsCardElement) {
-  const priceElement = itemsCardElement.querySelector('.digital');
-  const price = Number(priceElement.innerText.replaceAll(/\D/, ''));
-  if (DEPOSIT < price) { priceElement.classList.add('unaffordable') }
-}
-
 /* 放置功能按鈕 */
-setupButton('隱藏兌換類', TYPE_TAG.exchange, 'hide-exchange-items');
-setupButton('隱藏競標類', TYPE_TAG.bid, 'hide-bid-items');
-setupButton('隱藏抽獎類', TYPE_TAG.lottery, 'hide-lottery-items');
+const tabsBtnGroup = document.createElement('div');
+const firstTabsBtn = document.querySelector('.tabs-btn-box');
+tabsBtnGroup.id = 'tabs-btn-group';
+document.querySelector('#BH-master').insertBefore(tabsBtnGroup, firstTabsBtn);
+tabsBtnGroup.appendChild(firstTabsBtn);
+const newTabsBtn = document.createElement('div');
+newTabsBtn.classList.add('tabs-btn-box');
+newTabsBtn.innerHTML = /* html */`
+  <a class="flex-center btn-distance fuli-enhance">
+    <input id="hide-exchange-items" type="checkbox" data-keyword="${TYPE_TAG.exchange}">
+    <label for="hide-exchange-items">隱藏直購</label>
+  </a>
+  <a class="flex-center btn-distance fuli-enhance">
+    <input id="hide-bid-items" type="checkbox" data-keyword="${TYPE_TAG.bid}">
+    <label for="hide-bid-items">隱藏競標</label>
+  </a>
+  <a class="flex-center btn-distance fuli-enhance">
+    <input id="hide-lottery-items" type="checkbox" data-keyword="${TYPE_TAG.lottery}">
+    <label for="hide-lottery-items">隱藏抽抽樂</label>
+  </a>
+`;
+newTabsBtn.querySelectorAll('[type=checkbox]').forEach((el) => {
+  el.onchange = () => { toggleItemCards(el.getAttribute('data-keyword'), el.checked) };
+});
+tabsBtnGroup.appendChild(newTabsBtn);
 
 /* 放置商品類型計數區塊 */
 document.querySelector('#forum-lastBoard').insertAdjacentHTML('afterend', /* html */`
   <div class="m-hidden">
     <h5>現有商品數量</h5>
     <div class="BH-rbox flex-center">
-      <span>兌換類：</span>
+      <span>直購：</span>
       <span id="exchange-item-counter">0</span>
-      <span>競標類：</span>
+      <span>競標：</span>
       <span id="bid-item-counter">0</span>
-      <span>抽獎類：</span>
+      <span>抽抽樂：</span>
       <span id="lottery-item-counter">0</span>
     </div>
   </div>
@@ -137,19 +190,8 @@ const lotteryItemCounter = document.getElementById('lottery-item-counter');
 
 for (const card of document.querySelectorAll('a.items-card')) {
   // 依照商品卡種類，增加計數和取得目前出價
-  switch (card.querySelector('.type-tag').innerText.trim()) {
-    case TYPE_TAG.exchange:
-      exchangeItemCounter.innerText++;
-      break;
-    case TYPE_TAG.bid:
-      bidItemCounter.innerText++;
-      getCurrentBid(card); // 取得競標類商品的目前出價並標示於商品卡
-      break;
-    case TYPE_TAG.lottery:
-      lotteryItemCounter.innerText++;
-      break;
-  }
-  colorPriceTag(card); // 若價格高於存款，將價格標為紅色
+  const itemCard = new ItemCard(card);
+  itemCard.registerCard();
 }
 
 /* 動態載入全部商品 */
@@ -162,19 +204,8 @@ const observer = new MutationObserver((records) => {
     for (const newNode of record.addedNodes) {
       if (!newNode.classList.contains('items-card')) { continue }
       // 依照商品卡種類，增加計數和取得目前出價
-      switch (newNode.querySelector('.type-tag').innerText.trim()) {
-        case TYPE_TAG.exchange:
-          exchangeItemCounter.innerText++;
-          break;
-        case TYPE_TAG.bid:
-          bidItemCounter.innerText++;
-          getCurrentBid(newNode); // 取得競標類商品的目前出價並標示於商品卡
-          break;
-        case TYPE_TAG.lottery:
-          lotteryItemCounter.innerText++;
-          break;
-      }
-      colorPriceTag(newNode); // 若價格高於存款，將價格標為紅色
+      const itemCard = new ItemCard(newNode);
+      itemCard.registerCard();
     }
   }
 });
