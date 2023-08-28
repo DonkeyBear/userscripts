@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         巴哈姆特勇者福利社++
 // @namespace    https://github.com/DonkeyBear
-// @version      0.7.6
+// @version      0.8.0
 // @description  改進巴哈姆特的勇者福利社，動態載入全部商品、加入過濾隱藏功能、標示競標目前出價等。
 // @author       DonkeyBear
 // @match        https://fuli.gamer.com.tw/shop.php*
@@ -37,11 +37,51 @@ const stylesheet = /* css */`
   a.btn-distance.fuli-enhance > [type=checkbox] {
     margin-right: .15rem;
   }
-  .d-none, #BH-pagebtn {
+  .filter-by-title,
+  .filter-by-type,
+  .filter-by-state,
+  #BH-pagebtn {
     display: none;
   }
   .digital.unaffordable {
     color: #DF4747;
+  }
+
+  .fuli-enhance.btn-search {
+    padding: 0 .6rem !important;
+  }
+
+  .search-bar {
+    display: flex;
+    align-items: center;
+    border: 1px solid;
+    border-radius: 4px;
+    background-color: white;
+    padding: .2rem .3rem;
+  }
+
+  .search-bar > [type=text] {
+    width: 8rem;
+    border: 0;
+  }
+
+  .search-bar > [type=text]:focus-visible {
+    outline: 0;
+  }
+
+  .icon {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .icon-search {
+    border-left: 1px solid;
+    padding-left: .3rem;
+    margin-left: .2rem;
+  }
+
+  .icon-close {
+    transform: translate(2px, 2px);
   }
 
   #exchange-item-counter,
@@ -134,12 +174,26 @@ class ItemCard {
   }
 }
 
-function toggleItemCards (keyword, hide) {
-  const cards = document.querySelectorAll('a.items-card');
-  for (const card of cards) {
-    if (card.querySelector('.type-tag').innerText.includes(keyword)) {
-      hide ? card.classList.add('d-none') : card.classList.remove('d-none');
-    }
+class ItemCardList {
+  constructor (itemCardList = document.querySelectorAll('.item-list-box a.items-card')) {
+    this.itemCardList = itemCardList;
+  }
+
+  filterByTitle (filterTitle) {
+    this.itemCardList.forEach((itemCard) => {
+      const title = itemCard.querySelector('.items-title').innerText;
+      const filterClassName = 'filter-by-title';
+      title.includes(filterTitle) ? itemCard.classList.remove(filterClassName) : itemCard.classList.add(filterClassName);
+    });
+  }
+
+  filterByType (filterType) {
+    this.itemCardList.forEach((itemCard) => {
+      const type = itemCard.querySelector('.type-tag').innerText;
+      if (!type.includes(filterType)) { return }
+      const filterClassName = 'filter-by-type';
+      itemCard.classList.toggle(filterClassName);
+    });
   }
 }
 
@@ -164,10 +218,37 @@ newTabsBtn.innerHTML = /* html */`
     <input id="hide-lottery-items" type="checkbox" data-keyword="${TYPE_TAG.lottery}">
     <label for="hide-lottery-items">隱藏抽抽樂</label>
   </a>
+  <a class="flex-center btn-distance fuli-enhance btn-search">
+    <div class="search-bar">
+      <input type="text">
+      <svg class="icon icon-close" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+      </svg>
+      <svg class="icon icon-search" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"></path>
+      </svg>
+    </div>
+  </a>
 `;
 newTabsBtn.querySelectorAll('[type=checkbox]').forEach((el) => {
-  el.onchange = () => { toggleItemCards(el.getAttribute('data-keyword'), el.checked) };
+  el.onchange = () => {
+    const typeTag = el.getAttribute('data-keyword');
+    const itemCardList = new ItemCardList();
+    itemCardList.filterByType(typeTag);
+  };
 });
+const searchBar = newTabsBtn.querySelector('.search-bar > [type=text]');
+const iconClose = newTabsBtn.querySelector('.icon-close');
+iconClose.onclick = () => {
+  searchBar.value = '';
+  const itemCardList = new ItemCardList();
+  itemCardList.filterByTitle('');
+};
+searchBar.oninput = (event) => {
+  const searchText = event.target.value;
+  const itemCardList = new ItemCardList();
+  itemCardList.filterByTitle(searchText);
+};
 tabsBtnGroup.appendChild(newTabsBtn);
 
 /* 放置商品類型計數區塊 */
