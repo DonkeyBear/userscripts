@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.100.8
+// @version      0.100.9
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -173,6 +173,10 @@ class Chord {
   toString () {
     return this.chordString;
   }
+
+  toFormattedString () {
+    return this.chordString.replaceAll(/[#b]/g, /* html */`<sup>$&</sup>`); // eslint-disable-line quotes
+  }
 }
 
 /* 用於修改樂譜 */
@@ -328,7 +332,10 @@ const observer = new MutationObserver(() => {
       newFunctionDiv.innerHTML = /* html */`
         <button class="scf capo-button decrease">◀</button>
         <button class="scf capo-button info">
-          CAPO：<span class="text-capo">${stringCapo}</span>（<span class="text-key">${stringKey.replaceAll(/[#b]/g, '<sup>$&</sup>')}</span>）
+          CAPO：<span class="text-capo">${stringCapo}</span>
+          （<span class="text-key">${
+            stringKey.replaceAll(/[#b]/g, /* html */`<sup>$&</sup>`) // eslint-disable-line quotes
+          }</span>）
         </button>
         <button class="scf capo-button increase">▶</button>
       `;
@@ -338,10 +345,10 @@ const observer = new MutationObserver(() => {
       function transposeSheet (delta) {
         spanCapo.innerText = (Number(spanCapo.innerText) + delta) % 12;
         const keyName = new Chord(spanKey.innerText);
-        spanKey.innerHTML = keyName.transpose(-delta).toString().replaceAll(/[#b]/g, '<sup>$&</sup>');
+        spanKey.innerHTML = keyName.transpose(-delta).toFormattedString();
         for (const chordEl of document.querySelectorAll('#tone_z .tf')) {
           const chord = new Chord(chordEl.innerText);
-          chordEl.innerHTML = chord.transpose(-delta).toString().replaceAll(/[#b]/g, '<sup>$&</sup>');
+          chordEl.innerHTML = chord.transpose(-delta).toFormattedString();
         }
       };
       newFunctionDiv.querySelector('.capo-button.decrease').onclick = () => { transposeSheet(-1) };
