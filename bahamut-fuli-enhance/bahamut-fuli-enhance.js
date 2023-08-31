@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         巴哈姆特勇者福利社++
 // @namespace    https://github.com/DonkeyBear
-// @version      0.8.0
+// @version      0.8.1
 // @description  改進巴哈姆特的勇者福利社，動態載入全部商品、加入過濾隱藏功能、標示競標目前出價等。
 // @author       DonkeyBear
 // @match        https://fuli.gamer.com.tw/shop.php*
@@ -9,11 +9,15 @@
 // @grant        none
 // ==/UserScript==
 
-const darkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
 
 const stylesheet = /* css */`
   #BH-wrapper {
     padding-top: 0;
+  }
+
+  .items-card {
+    ${isDarkMode ? '' : 'z-index: -1;'}
   }
 
   #tabs-btn-group {
@@ -25,30 +29,45 @@ const stylesheet = /* css */`
   .tabs-btn-box {
     margin-top: 0;
   }
-  a.btn-distance.fuli-enhance {
+
+  .fuli-enhance-btn-box {
+    overflow: visible;
+  }
+
+  .btn-distance.fuli-enhance {
     width: auto;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
   }
-  a.btn-distance.fuli-enhance:not(:first-child) {
-    border-left: 1px solid;
-    ${darkMode ? 'border-color: #444444;' : ''};
+
+  .btn-distance.fuli-enhance > [type=checkbox] {
+    margin-right: .35rem;
   }
-  a.btn-distance.fuli-enhance > [type=checkbox] {
-    margin-right: .15rem;
-  }
+
   .filter-by-title,
   .filter-by-type,
   .filter-by-state,
   #BH-pagebtn {
     display: none;
   }
+
   .digital.unaffordable {
     color: #DF4747;
   }
 
   .fuli-enhance.btn-search {
-    padding: 0 .6rem !important;
+    padding: 0 .65rem;
+  }
+
+  .fuli-enhance.btn-filter {
+    cursor: pointer;
+    padding-left: 1.5rem;
+    padding-right: 1.2rem;
+    position: relative;
+    border-right: 1px solid;
+    ${isDarkMode ? 'border-color: #444444;' : ''};
+  }
+
+  .fuli-enhance.btn-filter:hover {
+    ${isDarkMode ? '' : 'opacity: 1;'}
   }
 
   .search-bar {
@@ -61,7 +80,7 @@ const stylesheet = /* css */`
   }
 
   .search-bar > [type=text] {
-    width: 8rem;
+    width: 9rem;
     border: 0;
   }
 
@@ -76,12 +95,53 @@ const stylesheet = /* css */`
 
   .icon-search {
     border-left: 1px solid;
-    padding-left: .3rem;
+    padding-left: .35rem;
     margin-left: .2rem;
   }
 
   .icon-close {
     transform: translate(2px, 2px);
+    cursor: pointer;
+  }
+
+  .icon-filter {
+    margin-left: .3rem;
+  }
+
+  .btn-filter:hover > #filter-popup {
+    display: flex;
+    flex-direction: column;
+    align-items: baseline;
+    width: max-content;
+  }
+
+  #filter-popup {
+    padding: .5rem;
+    position: absolute;
+    transform: translateX(-50%);
+    left: 50%;
+    top: 100%;
+    z-index: 1;
+    display: none;
+    overflow: visible;
+    background-color: ${isDarkMode ? '#272728' : '#FBFBFB'};
+    ${isDarkMode ? 'color: #C7C6CB;' : ''}
+  }
+
+  #filter-popup::before {
+    content: '';
+    width: 0;
+    height: 0;
+    border: .4rem solid transparent;
+    border-bottom: .35rem solid currentColor !important;
+    position: absolute;
+    transform: translateX(-50%);
+    left: 50%;
+    bottom: 100%;
+  }
+
+  #filter-popup label {
+    cursor: pointer;
   }
 
   #exchange-item-counter,
@@ -204,19 +264,27 @@ tabsBtnGroup.id = 'tabs-btn-group';
 document.querySelector('#BH-master').insertBefore(tabsBtnGroup, firstTabsBtn);
 tabsBtnGroup.appendChild(firstTabsBtn);
 const newTabsBtn = document.createElement('div');
-newTabsBtn.classList.add('tabs-btn-box');
+newTabsBtn.classList.add('tabs-btn-box', 'fuli-enhance-btn-box');
 newTabsBtn.innerHTML = /* html */`
-  <a class="flex-center btn-distance fuli-enhance">
-    <input id="hide-exchange-items" type="checkbox" data-keyword="${TYPE_TAG.exchange}">
-    <label for="hide-exchange-items">隱藏直購</label>
-  </a>
-  <a class="flex-center btn-distance fuli-enhance">
-    <input id="hide-bid-items" type="checkbox" data-keyword="${TYPE_TAG.bid}">
-    <label for="hide-bid-items">隱藏競標</label>
-  </a>
-  <a class="flex-center btn-distance fuli-enhance">
-    <input id="hide-lottery-items" type="checkbox" data-keyword="${TYPE_TAG.lottery}">
-    <label for="hide-lottery-items">隱藏抽抽樂</label>
+  <a class="flex-center btn-distance fuli-enhance btn-filter">
+    <span>篩選器</span>
+    <svg class="icon icon-filter" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 18">
+      <path d="M18.85 1.1A1.99 1.99 0 0 0 17.063 0H2.937a2 2 0 0 0-1.566 3.242L6.99 9.868 7 14a1 1 0 0 0 .4.8l4 3A1 1 0 0 0 13 17l.01-7.134 5.66-6.676a1.99 1.99 0 0 0 .18-2.09Z"/>
+    </svg>
+    <div id="filter-popup" class="tabs-btn-box">
+      <div class="flex-center btn-distance fuli-enhance">
+        <input id="hide-exchange-items" type="checkbox" data-keyword="${TYPE_TAG.exchange}">
+        <label for="hide-exchange-items">隱藏直購</label>
+      </div>
+      <div class="flex-center btn-distance fuli-enhance">
+        <input id="hide-bid-items" type="checkbox" data-keyword="${TYPE_TAG.bid}">
+        <label for="hide-bid-items">隱藏競標</label>
+      </div>
+      <div class="flex-center btn-distance fuli-enhance">
+        <input id="hide-lottery-items" type="checkbox" data-keyword="${TYPE_TAG.lottery}">
+        <label for="hide-lottery-items">隱藏抽抽樂</label>
+      </div>
+    </div>
   </a>
   <a class="flex-center btn-distance fuli-enhance btn-search">
     <div class="search-bar">
