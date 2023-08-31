@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.100.7
+// @version      0.100.8
 // @description  打造行動裝置看91譜的最好體驗。
 // @author       DonkeyBear
 // @match        https://www.91pu.com.tw/m/*
@@ -144,7 +144,33 @@ class Chord {
     return this;
   }
 
-  text () {
+  switchModifier () {
+    this.chordString = this.chordString.replaceAll(/[A-G][#b]/g, (note) => {
+      const scale = note.includes('#') ? Chord.sharps : Chord.flats;
+      const newScale = note.includes('#') ? Chord.flats : Chord.sharps;
+      const noteIndex = scale.indexOf(note);
+      return newScale[noteIndex];
+    });
+    return this;
+  }
+
+  useSharpModifier () {
+    this.chordString = this.chordString.replaceAll(/[A-G]b/g, (note) => {
+      const noteIndex = Chord.flats.indexOf(note);
+      return Chord.sharps[noteIndex];
+    });
+    return this;
+  }
+
+  useFlatModifier () {
+    this.chordString = this.chordString.replaceAll(/[A-G]#/g, (note) => {
+      const noteIndex = Chord.sharps.indexOf(note);
+      return Chord.flats[noteIndex];
+    });
+    return this;
+  }
+
+  toString () {
     return this.chordString;
   }
 }
@@ -170,7 +196,7 @@ class ChordSheetElement {
       nodeList.forEach((el) => {
         el.innerHTML = el.innerText
           .replaceAll(/{_|{=|=}|_}/g, '')
-          .replaceAll(/[a-zA-Z0-9#/]+/g, '<span class="tf">$&</span>');
+          .replaceAll(/[a-zA-Z0-9#/]+/g, /* html */`<span class="tf">$&</span>`); // eslint-disable-line quotes
       });
     };
     deformat(underlineEl);
@@ -202,44 +228,37 @@ class ChordSheetDocument {
 
   getKey () {
     const match = this.el.tkinfo?.innerText.match(/(?<=原調：)\w*/);
-    if (!match) { return '' }
-    return match[0].trim();
+    return match ? match[0].trim() : '';
   }
 
   getPlay () {
     const match = this.el.capoSelect?.innerText.split(/\s*\/\s*/);
-    if (!match) { return '' }
-    return match[1].trim();
+    return match ? match[1].trim() : '';
   }
 
   getCapo () {
     const match = this.el.capoSelect?.innerText.split(/\s*\/\s*/);
-    if (!match) { return 0 }
-    return Number(match[0]);
+    return match ? Number(match[0]) : 0;
   }
 
   getSinger () {
     const match = this.el.tinfo?.innerText.match(/(?<=演唱：).*(?=\n|$)/);
-    if (!match) { return '' }
-    return match[0].trim();
+    return match ? match[0].trim() : '';
   }
 
   getComposer () {
     const match = this.el.tinfo?.innerText.match(/(?<=曲：).*?(?=詞：|$)/);
-    if (!match) { return '' }
-    return match[0].trim();
+    return match ? match[0].trim() : '';
   }
 
   getLyricist () {
     const match = this.el.tinfo?.innerText.match(/(?<=詞：).*?(?=曲：|$)/);
-    if (!match) { return '' }
-    return match[0].trim();
+    return match ? match[0].trim() : '';
   }
 
   getBpm () {
     const match = this.el.tkinfo?.innerText.match(/\d+/);
-    if (!match) { return 0 }
-    return Number(match[0]);
+    return match ? Number(match[0]) : 0;
   }
 
   getSheetText () {
@@ -319,10 +338,10 @@ const observer = new MutationObserver(() => {
       function transposeSheet (delta) {
         spanCapo.innerText = (Number(spanCapo.innerText) + delta) % 12;
         const keyName = new Chord(spanKey.innerText);
-        spanKey.innerHTML = keyName.transpose(-delta).text().replaceAll(/[#b]/g, '<sup>$&</sup>');
+        spanKey.innerHTML = keyName.transpose(-delta).toString().replaceAll(/[#b]/g, '<sup>$&</sup>');
         for (const chordEl of document.querySelectorAll('#tone_z .tf')) {
           const chord = new Chord(chordEl.innerText);
-          chordEl.innerHTML = chord.transpose(-delta).text().replaceAll(/[#b]/g, '<sup>$&</sup>');
+          chordEl.innerHTML = chord.transpose(-delta).toString().replaceAll(/[#b]/g, '<sup>$&</sup>');
         }
       };
       newFunctionDiv.querySelector('.capo-button.decrease').onclick = () => { transposeSheet(-1) };
