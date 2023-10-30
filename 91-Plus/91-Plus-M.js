@@ -10,7 +10,7 @@
 // @grant        none
 // ==/UserScript==
 
-/* 若樂譜頁面為電腦版，切換為行動版 */
+// 若樂譜頁面為電腦版，切換為行動版
 const currentUrl = window.location.href;
 if (currentUrl.match(/\/song\//)) {
   const sheetId = currentUrl.match(/(?<=\/)\d+(?=\.)/)[0];
@@ -18,7 +18,7 @@ if (currentUrl.match(/\/song\//)) {
   window.location.replace(newUrl);
 }
 
-/* 引入 Google Analytics */
+// 引入 Google Analytics
 const googleAnalyticsScript = document.createElement('script');
 googleAnalyticsScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-JF4S3HZY31';
 googleAnalyticsScript.async = true;
@@ -30,7 +30,7 @@ googleAnalyticsScript.onload = () => {
   gtag('config', 'G-JF4S3HZY31');
 };
 
-/* 修改頁面樣式 */
+// 修改頁面樣式
 const stylesheet = /* css */`
   html {
     background: #fafafa url(/templets/pu/images/tone-bg.gif); 
@@ -123,7 +123,7 @@ const style = document.createElement('style');
 style.innerText = stylesheet;
 document.head.appendChild(style);
 
-/* 用於操作和弦字串 */
+/** 用於操作和弦字串 */
 class Chord {
   static sharps = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   static flats = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
@@ -179,7 +179,7 @@ class Chord {
   }
 }
 
-/* 用於修改樂譜 */
+/** 用於修改樂譜 */
 class ChordSheetElement {
   constructor (chordSheetElement) {
     this.chordSheetElement = chordSheetElement;
@@ -209,7 +209,7 @@ class ChordSheetElement {
   }
 }
 
-/* 用於取得樂譜相關資訊 */
+/** 用於取得樂譜相關資訊 */
 class ChordSheetDocument {
   constructor () {
     this.el = {
@@ -283,7 +283,7 @@ const observerCheckList = {
 };
 
 const observer = new MutationObserver(() => {
-  /* 更改網頁標題 */
+  // 更改網頁標題
   if (!observerCheckList.modifyTitle) {
     const songTitle = document.querySelector('#mtitle');
     if (songTitle?.innerText.trim()) {
@@ -318,7 +318,7 @@ const observer = new MutationObserver(() => {
     }
   } */
 
-  /* 刪除內建的移調鈕，建立自製的 */
+  // 刪除內建的移調鈕，建立自製的
   if (!observerCheckList.modifyTransposeButton) {
     const capoSelect = document.querySelector('.capo .select');
     if (capoSelect?.innerText.trim()) {
@@ -357,10 +357,18 @@ const observer = new MutationObserver(() => {
         transposeSheet(orginalCapo - Number(spanCapo.innerText));
       };
       document.querySelector('.setint').appendChild(newFunctionDiv);
+
+      // 依 URL 的參數進行移調，在結構大改前暫放於此
+      const url = new URL(window.location.href);
+      const transposeParam = url.searchParams.get('transpose');
+      if (transposeParam) {
+        const delta = Number(transposeParam);
+        transposeSheet(delta);
+      }
     }
   }
 
-  /* 發送請求至 API，雲端備份樂譜 */
+  // 發送請求至 API，雲端備份樂譜
   if (!observerCheckList.archiveChordSheet) {
     const sheet = document.getElementById('tone_z');
     if (sheet?.innerText.trim()) {
