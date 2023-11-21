@@ -1,138 +1,168 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      0.100.9
-// @description  打造行動裝置看91譜的最好體驗。
+// @version      1.0.0
+// @description  打造91譜的最佳體驗
 // @author       DonkeyBear
-// @match        https://www.91pu.com.tw/m/*
-// @match        https://www.91pu.com.tw/song/*
+// @match        *://www.91pu.com.tw/m/*
+// @match        *://www.91pu.com.tw/song/*
 // @icon         https://www.91pu.com.tw/icons/favicon-32x32.png
+// @antifeature  tracking
 // @grant        none
 // ==/UserScript==
 
-// 若樂譜頁面為電腦版，切換為行動版
-const currentUrl = window.location.href;
-if (currentUrl.match(/\/song\//)) {
-  const sheetId = currentUrl.match(/(?<=\/)\d+(?=\.)/)[0];
-  const newUrl = `https://www.91pu.com.tw/m/tone.shtml?id=${sheetId}`;
-  window.location.replace(newUrl);
+/* global $ */
+
+/** 若樂譜頁面為電腦版，跳轉至行動版 */
+function redirect () {
+  const currentUrl = window.location.href;
+  if ((/\/song\//).test(currentUrl)) {
+    const sheetId = currentUrl.match(/(?<=\/)\d+(?=\.)/)[0];
+    const newUrl = `https://www.91pu.com.tw/m/tone.shtml?id=${sheetId}`;
+    window.location.replace(newUrl);
+  }
 }
 
-// 引入 Google Analytics
-const googleAnalyticsScript = document.createElement('script');
-googleAnalyticsScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-JF4S3HZY31';
-googleAnalyticsScript.async = true;
-document.head.appendChild(googleAnalyticsScript);
-googleAnalyticsScript.onload = () => {
-  window.dataLayer = window.dataLayer || [];
-  function gtag () { window.dataLayer.push(arguments) }
-  gtag('js', new Date());
-  gtag('config', 'G-JF4S3HZY31');
-};
+/** 引入 Google Analytics */
+function injectGtag () {
+  const newScript = document.createElement('script');
+  newScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-JF4S3HZY31';
+  newScript.async = true;
+  document.head.appendChild(newScript);
+  newScript.onload = () => {
+    // 此區塊由 Google Analytics 生成
+    window.dataLayer = window.dataLayer || [];
+    function gtag () { window.dataLayer.push(arguments) }
+    gtag('js', new Date());
+    gtag('config', 'G-JF4S3HZY31');
+  };
+}
 
-// 修改頁面樣式
-const stylesheet = /* css */`
-  html {
-    background: #fafafa url(/templets/pu/images/tone-bg.gif); 
-  }
+/** 注入頁面樣式 */
+function injectStyle () {
+  const stylesheet = /* css */`
+    html {
+      background: #fafafa url(/templets/pu/images/tone-bg.gif); 
+    }
 
-  header {
-    background-color: rgba(25, 20, 90, 0.5);
-    backdrop-filter: blur(5px) saturate(80%);
-    -webkit-backdrop-filter: blur(5px) saturate(80%);
-    display: flex;
-    justify-content: center;
-    font-family: system-ui;
-  }
+    header {
+      background-color: rgba(25, 20, 90, 0.5);
+      backdrop-filter: blur(5px) saturate(80%);
+      -webkit-backdrop-filter: blur(5px) saturate(80%);
+      display: flex;
+      justify-content: center;
+      font-family: system-ui;
+    }
 
-  header > .set {
-    width: 768px;
-  }
+    header > .set {
+      width: 768px;
+    }
 
-  .tfunc2 {
-    margin: 10px;
-  }
+    .tfunc2 {
+      margin: 10px;
+    }
 
-  .setint {
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-  }
+    .setint {
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
 
-  .setint,
-  .plays .capo {
-    display: flex;
-    justify-content: space-between;
-  }
+    .setint,
+    .plays .capo {
+      display: flex;
+      justify-content: space-between;
+    }
 
-  #mtitle {
-    font-family: system-ui;
-  }
+    #mtitle {
+      font-family: system-ui;
+    }
 
-  .setint {
-    border-top: 0;
-    padding: 10px;
-  }
+    .setint {
+      border-top: 0;
+      padding: 10px;
+    }
 
-  .setint > .hr {
-    margin-right: 15px;
-    padding: 0 15px;
-  }
+    .setint > .hr {
+      margin-right: 15px;
+      padding: 0 15px;
+    }
 
-  .capo-section {
-    flex-grow: 1;
-    margin-right: 0 !important;
-    display: flex !important;
-    justify-content: space-between !important;
-  }
+    .capo-section {
+      flex-grow: 1;
+      margin-right: 0 !important;
+      display: flex !important;
+      justify-content: space-between !important;
+    }
 
-  .capo-button.decrease {
-    padding-right: 20px;
-  }
+    .capo-button.decrease {
+      padding-right: 20px;
+    }
 
-  .capo-button.increase {
-    padding-left: 20px;
-  }
+    .capo-button.increase {
+      padding-left: 20px;
+    }
 
-  /* 需要倒數才能關閉的蓋版廣告 */
-  #viptoneWindow.window,
-  /* 在頁面最底部的廣告 */
-  #bottomad,
-  /* 最上方提醒升級VIP的廣告 */
-  .update_vip_bar,
-  /* 譜上的LOGO和浮水印 */
-  .wmask,
-  /* 彈出式頁尾 */
-  footer,
-  /* 自動滾動頁面捲軸 */
-  .autoscroll,
-  /* 頁首的返回列 */
-  .backplace,
-  /* 頁首的多餘列 */
-  .set .keys,
-  .set .plays,
-  .set .clear,
-  /* 功能列上多餘的按鈕 */
-  .setint .hr:nth-child(4),
-  .setint .hr:nth-child(5),
-  .setint .hr:nth-child(6),
-  /* 其餘的Google廣告 */
-  .adsbygoogle {
-    display: none !important;
-  }
-`;
-const style = document.createElement('style');
-style.innerText = stylesheet;
-document.head.appendChild(style);
+    /* 需要倒數才能關閉的蓋版廣告 */
+    #viptoneWindow.window,
+    /* 在頁面最底部的廣告 */
+    #bottomad,
+    /* 最上方提醒升級VIP的廣告 */
+    .update_vip_bar,
+    /* 譜上的LOGO和浮水印 */
+    .wmask,
+    /* 彈出式頁尾 */
+    footer,
+    /* 自動滾動頁面捲軸 */
+    .autoscroll,
+    /* 頁首的返回列 */
+    .backplace,
+    /* 頁首的多餘列 */
+    .set .keys,
+    .set .plays,
+    .set .clear,
+    /* 功能列上多餘的按鈕 */
+    .setint .hr:nth-child(4),
+    .setint .hr:nth-child(5),
+    .setint .hr:nth-child(6),
+    /* 其餘的Google廣告 */
+    .adsbygoogle {
+      display: none !important;
+    }
+  `;
+  const style = document.createElement('style');
+  style.innerText = stylesheet;
+  document.head.appendChild(style);
+}
+
+/**
+ * @typedef {object} Params
+ * @prop {number} transpose
+ * @prop {boolean} darkMode
+ */
+/**
+ * 從 URL 取得參數
+ * @returns {Params}
+ */
+function getQueryParams () {
+  const url = new URL(window.location.href);
+  const params = {
+    transpose: +url.searchParams.get('transpose'),
+    darkMode: !!url.searchParams.get('darkmode')
+  };
+  return params;
+}
 
 /** 用於操作和弦字串 */
 class Chord {
   static sharps = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   static flats = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 
+  /** @param {string} chordString  */
   constructor (chordString) {
     this.chordString = chordString;
   }
 
-  transpose (delta = 0) {
+  /** @param {number} delta */
+  transpose (delta) {
     this.chordString = this.chordString.replaceAll(/[A-G][#b]?/g, (note) => {
       const isSharp = Chord.sharps.includes(note);
       const scale = isSharp ? Chord.sharps : Chord.flats;
@@ -181,6 +211,7 @@ class Chord {
 
 /** 用於修改樂譜 */
 class ChordSheetElement {
+  /** @param {HTMLElement} chordSheetElement  */
   constructor (chordSheetElement) {
     this.chordSheetElement = chordSheetElement;
   }
@@ -193,18 +224,18 @@ class ChordSheetElement {
     return this;
   }
 
-  deformatUnderlines () {
+  unformatUnderlines () {
     const underlineEl = this.chordSheetElement.querySelectorAll('u');
     const doubleUnderlineEl = this.chordSheetElement.querySelectorAll('abbr');
-    const deformat = (nodeList) => {
+    const unformat = (nodeList) => {
       nodeList.forEach((el) => {
         el.innerHTML = el.innerText
           .replaceAll(/{_|{=|=}|_}/g, '')
           .replaceAll(/[a-zA-Z0-9#/]+/g, /* html */`<span class="tf">$&</span>`); // eslint-disable-line quotes
       });
     };
-    deformat(underlineEl);
-    deformat(doubleUnderlineEl);
+    unformat(underlineEl);
+    unformat(doubleUnderlineEl);
     return this;
   }
 }
@@ -275,137 +306,197 @@ class ChordSheetDocument {
   }
 }
 
-const observerCheckList = {
-  modifyTitle: false,
-  // modifyHeaderFunction: false,
-  modifyTransposeButton: false,
-  archiveChordSheet: false
+/**
+ * 將 Header 和譜上的和弦移調，並實質修改於 DOM
+ * @param {number} delta
+ */
+function transposeSheet (delta) {
+  // 修改 Header 上的 Capo
+  const $spanCapo = $('.capo-button > .text-capo');
+  const newSpanCapoText = (+$spanCapo.text() + delta) % 12;
+  $spanCapo.text(newSpanCapoText);
+
+  // 修改 Header 上的 Key
+  const $spanKey = $('.capo-button > .text-key');
+  const keyName = new Chord($spanKey.text());
+  const newSpanCapoHTML = keyName.transpose(-delta).toFormattedString();
+  $spanKey.html(newSpanCapoHTML);
+
+  // 修改譜上的和弦
+  $('#tone_z .tf').each(function () {
+    const chord = new Chord($(this).text());
+    const newChordHTML = chord.transpose(-delta).toFormattedString();
+    $(this).html(newChordHTML);
+  });
 };
 
-const observer = new MutationObserver(() => {
-  // 更改網頁標題
-  if (!observerCheckList.modifyTitle) {
-    const songTitle = document.querySelector('#mtitle');
-    if (songTitle?.innerText.trim()) {
-      observerCheckList.modifyTitle = true;
-      document.title = `${songTitle.innerText} | 91+ M`;
+/** 初始化並綁定大部分事件 */
+function initEventHandlers () {
+  /** @type {number} */
+  let originalCapo;
+
+  // 頁面動態讀取完成時觸發
+  $('body').on('mutation.done', () => {
+    // 記錄原調
+    const $textCapo = $('.capo-button > .text-capo');
+    originalCapo = +$textCapo.text();
+
+    // 依照 URL 參數進行移調
+    if (getQueryParams().transpose) {
+      transposeSheet(getQueryParams().transpose);
     }
+  });
+
+  // 點擊移調按鈕時進行移調
+  $('body').on('click', '.capo-section > .capo-button.decrease', () => { transposeSheet(-1) });
+  $('body').on('click', '.capo-section > .capo-button.increase', () => { transposeSheet(1) });
+  $('body').on('click', '.capo-section > .capo-button.info', () => {
+    const $textCapo = $('.capo-button > .text-capo');
+    const currentCapo = +$textCapo.text();
+    transposeSheet(originalCapo - currentCapo);
+  });
+}
+
+/**
+ * 將網頁標題替換為自訂格式
+ * @returns {boolean} 是否完成
+ */
+function changeTitle () {
+  const $mtitle = $('#mtitle');
+  const newTitle = $mtitle.text().trim();
+  if (newTitle) {
+    document.title = `${newTitle} | 91+ M`;
+    return true;
+  } else {
+    return false;
+  }
+}
+
+/**
+ * 修改 Header：替換移調按鈕、增加自訂按鈕等
+ * @returns {boolean} 是否完成
+ */
+function modifyHeader () {
+  const capoSelectText = $('.capo .select').eq(0).text().trim();
+  if (!capoSelectText) { return false }
+
+  const stringCapo = capoSelectText.split(/\s*\/\s*/)[0]; // CAPO
+  const stringKey = capoSelectText.split(/\s*\/\s*/)[1]; // 調
+
+  // 新增功能鈕
+  const newFunctionDiv = document.createElement('div');
+  newFunctionDiv.classList.add('hr', 'capo-section');
+  newFunctionDiv.innerHTML = /* html */`
+    <button class="scf capo-button decrease">◀</button>
+    <button class="scf capo-button info">
+      CAPO：<span class="text-capo">${stringCapo}</span>
+      （<span class="text-key">${
+        stringKey.replaceAll(/[#b]/g, /* html */`<sup>$&</sup>`) // eslint-disable-line quotes
+      }</span>）
+    </button>
+    <button class="scf capo-button increase">▶</button>
+  `;
+  document.querySelector('.setint').appendChild(newFunctionDiv);
+
+  return true;
+}
+
+/**
+ * 發送請求至 API，雲端備份樂譜
+ * @returns {boolean} 是否完成
+ */
+function archiveChordSheet () {
+  const sheet = document.getElementById('tone_z');
+  if (!sheet?.innerText.trim()) { return false }
+
+  const chordSheetDocument = new ChordSheetDocument();
+  try {
+    const chordSheetElement = new ChordSheetElement(sheet);
+    chordSheetElement.formatUnderlines();
+
+    const formBody = {
+      id: chordSheetDocument.getId(),
+      title: chordSheetDocument.getTitle(),
+      key: chordSheetDocument.getKey(),
+      play: chordSheetDocument.getPlay(),
+      capo: chordSheetDocument.getCapo(),
+      singer: chordSheetDocument.getSinger(),
+      composer: chordSheetDocument.getComposer(),
+      lyricist: chordSheetDocument.getLyricist(),
+      bpm: chordSheetDocument.getBpm(),
+      sheet_text: chordSheetDocument.getSheetText()
+    };
+    chordSheetElement.unformatUnderlines();
+
+    fetch('https://91-plus-plus-api.fly.dev/archive', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(formBody)
+    })
+      .then(response => { console.log('雲端樂譜備份成功：', response) })
+      .catch(error => { console.error('雲端樂譜備份失敗：', error) });
+  } catch {
+    console.warn('樂譜解析失敗，無法備份');
+    fetch(`https://91-plus-plus-api.fly.dev/report?id=${chordSheetDocument.getId()}`);
   }
 
-  /* 修改頁首功能鈕（下排） */
-  /* if (!observerCheckList.modifyHeaderFunction) {
-    if (document.querySelectorAll('.setint .hr').length === 6) {
-      // 隱藏頁首部分功能鈕
-      observerCheckList.modifyHeaderFunction = true;
-      for (let i = 3; i < 6; i++) {
-        if (document.querySelectorAll('.setint .hr')[i]) {
-          document.querySelectorAll('.setint .hr')[i].style.display = 'none';
-        }
-      }
-      // 新增功能鈕
-      const newFunctionDiv = document.createElement('div');
-      newFunctionDiv.classList.add('hr', 'select-all');
-      newFunctionDiv.innerHTML = html`<button class="scf">全選</button>`; // eslint-disable-line quotes
-      newFunctionDiv.onclick = () => {
-        if (window.getSelection) {
-          const range = document.createRange();
-          range.selectNode(document.querySelector('#tone_z'));
-          window.getSelection().removeAllRanges();
-          window.getSelection().addRange(range);
-        }
-      };
-      document.querySelector('.setint').appendChild(newFunctionDiv);
-    }
-  } */
+  return true;
+}
 
-  // 刪除內建的移調鈕，建立自製的
-  if (!observerCheckList.modifyTransposeButton) {
-    const capoSelect = document.querySelector('.capo .select');
-    if (capoSelect?.innerText.trim()) {
-      observerCheckList.modifyTransposeButton = true;
-      const stringCapo = capoSelect.innerText.split(/\s*\/\s*/)[0]; // CAPO
-      const stringKey = capoSelect.innerText.split(/\s*\/\s*/)[1]; // 調
-
-      // 新增功能鈕
-      const newFunctionDiv = document.createElement('div');
-      newFunctionDiv.classList.add('hr', 'capo-section');
-      newFunctionDiv.innerHTML = /* html */`
-        <button class="scf capo-button decrease">◀</button>
-        <button class="scf capo-button info">
-          CAPO：<span class="text-capo">${stringCapo}</span>
-          （<span class="text-key">${
-            stringKey.replaceAll(/[#b]/g, /* html */`<sup>$&</sup>`) // eslint-disable-line quotes
-          }</span>）
-        </button>
-        <button class="scf capo-button increase">▶</button>
-      `;
-      const spanCapo = newFunctionDiv.querySelector('.text-capo');
-      const spanKey = newFunctionDiv.querySelector('.text-key');
-      const orginalCapo = Number(spanCapo.innerText);
-      function transposeSheet (delta) {
-        spanCapo.innerText = (Number(spanCapo.innerText) + delta) % 12;
-        const keyName = new Chord(spanKey.innerText);
-        spanKey.innerHTML = keyName.transpose(-delta).toFormattedString();
-        for (const chordEl of document.querySelectorAll('#tone_z .tf')) {
-          const chord = new Chord(chordEl.innerText);
-          chordEl.innerHTML = chord.transpose(-delta).toFormattedString();
-        }
-      };
-      newFunctionDiv.querySelector('.capo-button.decrease').onclick = () => { transposeSheet(-1) };
-      newFunctionDiv.querySelector('.capo-button.increase').onclick = () => { transposeSheet(1) };
-      newFunctionDiv.querySelector('.capo-button.info').onclick = () => {
-        transposeSheet(orginalCapo - Number(spanCapo.innerText));
-      };
-      document.querySelector('.setint').appendChild(newFunctionDiv);
-
-      // 依 URL 的參數進行移調，在結構大改前暫放於此
-      const url = new URL(window.location.href);
-      const transposeParam = url.searchParams.get('transpose');
-      if (transposeParam) {
-        const delta = Number(transposeParam);
-        transposeSheet(delta);
-      }
-    }
+/**
+ * @typedef {object} ObserverCheckList
+ * @prop {boolean} changeTitle 是否已替換頁面標題
+ * @prop {boolean} modifyHeader 是否已替換 Header
+ * @prop {boolean} archiveChordSheet 是否已將樂譜進行雲端備份
+ */
+/**
+ * 透過 MutationObserver 觸發的處理函式
+ * @param {ObserverCheckList} checkList
+ */
+function observerHandler (checkList) {
+  if (!checkList.changeTitle) {
+    checkList.changeTitle = changeTitle();
+  }
+  if (!checkList.modifyHeader) {
+    checkList.modifyHeader = modifyHeader();
+  }
+  if (!checkList.archiveChordSheet) {
+    checkList.archiveChordSheet = archiveChordSheet();
   }
 
-  // 發送請求至 API，雲端備份樂譜
-  if (!observerCheckList.archiveChordSheet) {
-    const sheet = document.getElementById('tone_z');
-    if (sheet?.innerText.trim()) {
-      observerCheckList.archiveChordSheet = true;
-      const chordSheetDocument = new ChordSheetDocument();
-      try {
-        const chordSheetElement = new ChordSheetElement(sheet);
-        chordSheetElement.formatUnderlines();
-
-        const formBody = {
-          id: chordSheetDocument.getId(),
-          title: chordSheetDocument.getTitle(),
-          key: chordSheetDocument.getKey(),
-          play: chordSheetDocument.getPlay(),
-          capo: chordSheetDocument.getCapo(),
-          singer: chordSheetDocument.getSinger(),
-          composer: chordSheetDocument.getComposer(),
-          lyricist: chordSheetDocument.getLyricist(),
-          bpm: chordSheetDocument.getBpm(),
-          sheet_text: chordSheetDocument.getSheetText()
-        };
-        chordSheetElement.deformatUnderlines();
-
-        fetch('https://91-plus-plus-api.fly.dev/archive', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(formBody)
-        })
-          .then(response => { console.log(response) })
-          .catch(error => { console.error(error) });
-      } catch {
-        fetch(`https://91-plus-plus-api.fly.dev/report?id=${chordSheetDocument.getId()}`);
-      }
-    }
+  // 如果已全數完成，則觸發 body 上的 mutation.done 事件
+  let isAllClear = true;
+  for (const checked of Object.values(checkList)) {
+    if (!checked) { isAllClear = false }
   }
-});
+  if (isAllClear) { $('body').trigger('mutation.done') }
+}
 
-observer.observe(document.body, { childList: true, subtree: true });
+/** 初始化 MutationObserver */
+function initMutationObserver () {
+  /** @type {ObserverCheckList} */
+  const observerCheckList = {
+    changeTitle: false,
+    modifyHeader: false,
+    archiveChordSheet: false
+  };
+
+  const observer = new MutationObserver(() => {
+    observerHandler(observerCheckList);
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+  $('body').on('mutation.done', () => { observer.disconnect() });
+}
+
+/** 主程式進入點 */
+function main () {
+  redirect();
+  injectGtag();
+  injectStyle();
+  initEventHandlers();
+  initMutationObserver();
+}
+
+main();
