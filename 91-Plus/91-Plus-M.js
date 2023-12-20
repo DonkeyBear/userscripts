@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         91 Plus M
 // @namespace    https://github.com/DonkeyBear
-// @version      1.0.0
+// @version      1.0.1
 // @description  打造91譜的最佳體驗
 // @author       DonkeyBear
 // @match        *://www.91pu.com.tw/m/*
@@ -490,6 +490,24 @@ function initMutationObserver () {
   $('body').on('mutation.done', () => { observer.disconnect() });
 }
 
+/** 於每天第一次使用時跳出升級建議 */
+function askToUpdate () {
+  const storageKey = 'plus91-last-visit';
+  const lastVisit = localStorage.getItem(storageKey);
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    return `${year}-${month}-${day}`;
+  };
+  const currentDate = formatDate(new Date());
+  if (currentDate !== lastVisit) {
+    localStorage.setItem(storageKey, currentDate);
+    alert('91 Plus M 已經停止更新和維護了！\n建議升級至全新版本的 91 Plus。\n\n（本訊息僅會在每天第一次使用時跳出）');
+    window.open('https://github.com/DonkeyBear/91Plus/wiki/91-Plus-%E8%88%87-91-Plus-M', '_blank').focus();
+  }
+}
+
 /** 主程式進入點 */
 function main () {
   redirect();
@@ -497,6 +515,7 @@ function main () {
   injectStyle();
   initEventHandlers();
   initMutationObserver();
+  askToUpdate();
 }
 
 main();
