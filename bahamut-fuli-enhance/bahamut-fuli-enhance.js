@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         巴哈姆特勇者福利社++
 // @namespace    https://github.com/DonkeyBear
-// @version      0.8.2
+// @version      0.8.3
 // @description  改進巴哈姆特的勇者福利社，動態載入全部商品、加入過濾隱藏功能、標示競標目前出價等。
 // @author       DonkeyBear
 // @match        https://fuli.gamer.com.tw/shop.php*
