@@ -205,11 +205,12 @@ class ItemCard {
     if (this.type !== TYPE_TAG.bid) { return this } // 若非競標品則結束函式
     const $priceElement = this.$itemCard.find('.price');
     $priceElement.text('正在讀取目前出價');
-    fetch(this.itemCard.href, { method: 'GET' })
+    fetch(this.$itemCard.attr('href'), { method: 'GET' })
       .then(res => res.text())
       .then(data => {
         const parser = new DOMParser();
         const virtualDoc = parser.parseFromString(data, 'text/html');
+
 
         let currentBid;
         $(virtualDoc).find('.pbox-content').each((idnex, item) => {
@@ -364,6 +365,7 @@ const observer = new MutationObserver((records) => {
       // 依照商品卡種類，增加計數和取得目前出價
       const itemCard = new ItemCard($(newNode));
       itemCard.registerCard();
+      if (itemCard.type === TYPE_TAG.bid) { itemCard.fetchCurrentBid() }
     })
   })
 });
