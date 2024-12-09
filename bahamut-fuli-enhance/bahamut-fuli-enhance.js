@@ -9,7 +9,8 @@
 // @grant        none
 // ==/UserScript==
 
-const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+const $ = jQuery;
+const isDarkMode = $(document.documentElement).data('theme') === 'dark';
 
 const stylesheet = /* css */`
   #BH-wrapper {
@@ -160,19 +161,18 @@ const stylesheet = /* css */`
     margin-left: 8px;
   }
 `;
-const style = document.createElement('style');
-style.textContent = stylesheet;
-document.head.appendChild(style);
+$('<style>').text(stylesheet).appendTo('head');
 
 // 依照 URL Param 判斷是否執行後續程式
 const newUrl = new URL(window.location);
-if (newUrl.searchParams.get('history') !== '0' && newUrl.searchParams.get('history') != null) { return }
-if (newUrl.searchParams.get('page') !== '1' && newUrl.searchParams.get('page') != null) {
-  window.location.replace('https://fuli.gamer.com.tw/shop.php');
-}
+const getParam = (param) => newUrl.searchParams.get(param);
+const isOnHistoryPage = getParam('history') !== null && getParam('history') !== '0';
+const isOnFirstPage = getParam('page') === null || getParam('page') === '1';
+if (isOnHistoryPage) { return }
+if (!isOnFirstPage) { window.location.replace('https://fuli.gamer.com.tw/shop.php') }
 
 // 持有的巴幣存款
-const DEPOSIT = Number(document.querySelector('.brave-assets').innerText.replaceAll(/\D/, ''));
+const DEPOSIT = +$('.brave-assets').text().replaceAll(/\D/g, '');
 
 // .items-card .type-tag 的內文
 const TYPE_TAG = {
@@ -182,15 +182,17 @@ const TYPE_TAG = {
 };
 
 class ItemCard {
+  /** @param {HTMLElement|jQuery|string} itemCard */
   constructor (itemCard) {
     this.itemCard = itemCard;
-    this.type = itemCard.querySelector('.type-tag').innerText.trim();
+    this.$itemCard = $(itemCard);
+    this.type = $(itemCard).find('.type-tag').text().trim();
   }
 
   fetchCurrentBid () {
-    if (this.itemCard.querySelector('.type-tag').innerText !== TYPE_TAG.bid) { return this } // 若非競標品則結束函式
-    const priceElement = this.itemCard.querySelector('.price');
-    priceElement.innerText = '正在讀取目前出價';
+    if (this.type !== TYPE_TAG.bid) { return this } // 若非競標品則結束函式
+    const $priceElement = this.$itemCard.find('.price');
+    $priceElement.text('正在讀取目前出價');
     fetch(this.itemCard.href, { method: 'GET' })
       .then(res => res.text())
       .then(data => {
@@ -198,24 +200,25 @@ class ItemCard {
         const virtualDoc = parser.parseFromString(data, 'text/html');
 
         let currentBid;
-        for (const item of virtualDoc.querySelectorAll('.pbox-content')) {
-          if (!item.innerText.includes('目前出價')) { continue }
-          currentBid = item.querySelector('.pbox-content-r').innerText.match(/[\d|,]+/)[0];
-          break;
-        }
+        $(virtualDoc).find('.pbox-content').each((idnex, item) => {
+          if (!$(item).text().includes('目前出價')) { return }
+          if (!Number.isNaN(+currentBid)) { return }
+          currentBid = $(item).find('.pbox-content-r').text().match(/[\d|,]+/)[0];
+        });
         const newTextHTML = /* html */`目前出價<p class="digital current-bid">${currentBid}</p>巴幣`;
-        priceElement.innerHTML = newTextHTML;
+        $priceElement.html(newTextHTML);
         this.colorPriceTag();
       })
-      .catch(() => {
-        priceElement.innerText = '讀取出價失敗！';
+      .catch((error) => {
+        $priceElement.text('讀取出價失敗！');
+        console.error(error);
       });
   }
 
   colorPriceTag () {
-    const priceNumberElement = this.itemCard.querySelector('.digital');
-    const price = Number(priceNumberElement.innerText.replaceAll(/\D/, ''));
-    if (DEPOSIT < price) { priceNumberElement.classList.add('unaffordable') }
+    const $priceNumberElement = this.$itemCard.find('.digital');
+    const price = +$priceNumberElement.text().replaceAll(/\D/g, '');
+    if (DEPOSIT < price) { $priceNumberElement.addClass('unaffordable') }
   }
 
   registerCard () {
@@ -226,7 +229,6 @@ class ItemCard {
         break;
       case TYPE_TAG.bid:
         bidItemCounter.innerText++;
-        this.fetchCurrentBid(); // 取得競標類商品的目前出價並標示於商品卡
         break;
       case TYPE_TAG.lottery:
         lotteryItemCounter.innerText++;
@@ -236,37 +238,35 @@ class ItemCard {
 }
 
 class ItemCardList {
-  constructor (itemCardList = document.querySelectorAll('.item-list-box a.items-card')) {
-    this.itemCardList = itemCardList;
+  /** @param {HTMLElement|jQuery|string} [itemCardList=$('.item-list-box a.items-card')] */
+  constructor (itemCardList = $('.item-list-box a.items-card')) {
+    this.$itemCardList = $(itemCardList);
   }
 
   filterByTitle (filterTitle) {
-    this.itemCardList.forEach((itemCard) => {
-      const title = itemCard.querySelector('.items-title').innerText;
+    this.$itemCardList.each((i, itemCard) => {
+      const title = $(itemCard).find('.items-title').text();
       const filterClassName = 'filter-by-title';
-      title.includes(filterTitle) ? itemCard.classList.remove(filterClassName) : itemCard.classList.add(filterClassName);
+      title.includes(filterTitle) ? $(itemCard).removeClass(filterClassName) : $(itemCard).addClass(filterClassName);
     });
   }
 
   filterByType (filterType) {
-    this.itemCardList.forEach((itemCard) => {
-      const type = itemCard.querySelector('.type-tag').innerText;
+    this.$itemCardList.each((i, itemCard) => {
+      const type = new ItemCard(itemCard).type;
       if (!type.includes(filterType)) { return }
       const filterClassName = 'filter-by-type';
-      itemCard.classList.toggle(filterClassName);
+      $(itemCard).toggleClass(filterClassName);
     });
   }
 }
 
 /* 放置功能按鈕 */
-const tabsBtnGroup = document.createElement('div');
-const firstTabsBtn = document.querySelector('.tabs-btn-box');
-tabsBtnGroup.id = 'tabs-btn-group';
-document.querySelector('#BH-master').insertBefore(tabsBtnGroup, firstTabsBtn);
-tabsBtnGroup.appendChild(firstTabsBtn);
-const newTabsBtn = document.createElement('div');
-newTabsBtn.classList.add('tabs-btn-box', 'fuli-enhance-btn-box');
-newTabsBtn.innerHTML = /* html */`
+const $firstTabsBtn = $('.tabs-btn-box');
+$firstTabsBtn.wrap(/* html */`<div id="tabs-btn-group"></div>`);
+const $tabsBtnGroup = $('#tabs-btn-group');
+const $newTabsBtn = $('<div>', { class: 'tabs-btn-box fuli-enhance-btn-box' });
+$newTabsBtn.html(/* html */`
   <a class="flex-center btn-distance fuli-enhance btn-filter">
     <span>篩選器</span>
     <svg class="icon icon-filter" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 18">
@@ -298,30 +298,28 @@ newTabsBtn.innerHTML = /* html */`
       </svg>
     </div>
   </a>
-`;
-newTabsBtn.querySelectorAll('[type=checkbox]').forEach((el) => {
-  el.onchange = () => {
-    const typeTag = el.getAttribute('data-keyword');
-    const itemCardList = new ItemCardList();
-    itemCardList.filterByType(typeTag);
-  };
+`);
+$newTabsBtn.on('change', '[type=checkbox]', function() {
+  const typeTag = $(this).data('keyword');
+  const itemCardList = new ItemCardList();
+  itemCardList.filterByType(typeTag);
 });
-const searchBar = newTabsBtn.querySelector('.search-bar > [type=text]');
-const iconClose = newTabsBtn.querySelector('.icon-close');
-iconClose.onclick = () => {
+const searchBar = $newTabsBtn.find('.search-bar > [type=text]');
+const iconClose = $newTabsBtn.find('.icon-close');
+iconClose.on('click', () => {
   searchBar.value = '';
   const itemCardList = new ItemCardList();
   itemCardList.filterByTitle('');
-};
-searchBar.oninput = (event) => {
-  const searchText = event.target.value;
+});
+searchBar.on('input', function() {
+  const searchText = $(this).val();
   const itemCardList = new ItemCardList();
   itemCardList.filterByTitle(searchText);
-};
-tabsBtnGroup.appendChild(newTabsBtn);
+});
+$tabsBtnGroup.append($newTabsBtn);
 
 /* 放置商品類型計數區塊 */
-document.querySelector('#forum-lastBoard').insertAdjacentHTML('afterend', /* html */`
+$('#forum-lastBoard').after(/* html */`
   <div class="m-hidden">
     <h5>現有商品數量</h5>
     <div class="BH-rbox flex-center">
@@ -342,22 +340,23 @@ for (const card of document.querySelectorAll('a.items-card')) {
   // 依照商品卡種類，增加計數和取得目前出價
   const itemCard = new ItemCard(card);
   itemCard.registerCard();
+  if (itemCard.type === TYPE_TAG.bid) { itemCard.fetchCurrentBid() }
 }
 
 /* 動態載入全部商品 */
-const itemListBox = document.querySelector('.item-list-box');
-const maxPage = document.querySelector('.BH-pagebtnA a:last-child').innerText;
+const $itemListBox = $('.item-list-box');
+const maxPage = $('.BH-pagebtnA a:last-child').text();
 if (maxPage === '1') { return } // 若僅一頁則不需讀取
 const observer = new MutationObserver((records) => {
   // 建立觀測器，觀測新加入的商品卡
-  for (const record of records) {
-    for (const newNode of record.addedNodes) {
-      if (!newNode.classList.contains('items-card')) { continue }
+  records.forEach((record) => {
+    record.addedNodes.forEach((newNode) => {
+      if (!$(newNode).hasClass('items-card')) { return }
       // 依照商品卡種類，增加計數和取得目前出價
-      const itemCard = new ItemCard(newNode);
+      const itemCard = new ItemCard($(newNode));
       itemCard.registerCard();
-    }
-  }
+    })
+  })
 });
 observer.observe(document.querySelector('.item-list-box'), { childList: true });
 
@@ -368,7 +367,7 @@ for (let page = 2; page <= maxPage; page++) {
       const parser = new DOMParser();
       const virtualDoc = parser.parseFromString(data, 'text/html');
 
-      const items = virtualDoc.querySelectorAll('.item-list-box a.items-card');
-      for (const item of items) { itemListBox.appendChild(item) }
+      const $items = $(virtualDoc).find('.item-list-box a.items-card');
+      $items.each((i, item) => { $itemListBox.append(item) });
     });
 }
