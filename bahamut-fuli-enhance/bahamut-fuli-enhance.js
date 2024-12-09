@@ -181,6 +181,18 @@ const TYPE_TAG = {
   lottery: '抽抽樂'
 };
 
+const itemCounter = new Proxy({
+  exchange: 0,
+  bid: 0,
+  lottery: 0
+}, {
+  set(target, prop, value) {
+    target[prop] = +value;
+    $(`#${prop}-item-counter`).text(target[prop]);
+    return true;
+  }
+})
+
 class ItemCard {
   /** @param {HTMLElement|jQuery|string} itemCard */
   constructor (itemCard) {
@@ -225,13 +237,13 @@ class ItemCard {
     // 依照商品卡種類，增加計數和取得目前出價
     switch (this.type) {
       case TYPE_TAG.exchange:
-        exchangeItemCounter.innerText++;
+        itemCounter.exchange++;
         break;
       case TYPE_TAG.bid:
-        bidItemCounter.innerText++;
+        itemCounter.bid++;
         break;
       case TYPE_TAG.lottery:
-        lotteryItemCounter.innerText++;
+        itemCounter.lottery++;
         break;
     }
   }
@@ -261,7 +273,22 @@ class ItemCardList {
   }
 }
 
-/* 放置功能按鈕 */
+// 放置商品類型計數區塊
+$('#forum-lastBoard').after(/* html */`
+  <div class="m-hidden">
+    <h5>現有商品數量</h5>
+    <div class="BH-rbox flex-center">
+      <span>直購：</span>
+      <span id="exchange-item-counter">0</span>
+      <span>競標：</span>
+      <span id="bid-item-counter">0</span>
+      <span>抽抽樂：</span>
+      <span id="lottery-item-counter">0</span>
+    </div>
+  </div>
+`);
+
+// 放置功能按鈕
 const $firstTabsBtn = $('.tabs-btn-box');
 $firstTabsBtn.wrap(/* html */`<div id="tabs-btn-group"></div>`);
 const $tabsBtnGroup = $('#tabs-btn-group');
@@ -304,13 +331,13 @@ $newTabsBtn.on('change', '[type=checkbox]', function() {
   const itemCardList = new ItemCardList();
   itemCardList.filterByType(typeTag);
 });
-const searchBar = $newTabsBtn.find('.search-bar > [type=text]');
 const iconClose = $newTabsBtn.find('.icon-close');
 iconClose.on('click', () => {
   searchBar.value = '';
   const itemCardList = new ItemCardList();
   itemCardList.filterByTitle('');
 });
+const searchBar = $newTabsBtn.find('.search-bar > [type=text]');
 searchBar.on('input', function() {
   const searchText = $(this).val();
   const itemCardList = new ItemCardList();
@@ -318,32 +345,14 @@ searchBar.on('input', function() {
 });
 $tabsBtnGroup.append($newTabsBtn);
 
-/* 放置商品類型計數區塊 */
-$('#forum-lastBoard').after(/* html */`
-  <div class="m-hidden">
-    <h5>現有商品數量</h5>
-    <div class="BH-rbox flex-center">
-      <span>直購：</span>
-      <span id="exchange-item-counter">0</span>
-      <span>競標：</span>
-      <span id="bid-item-counter">0</span>
-      <span>抽抽樂：</span>
-      <span id="lottery-item-counter">0</span>
-    </div>
-  </div>
-`);
-const exchangeItemCounter = document.getElementById('exchange-item-counter');
-const bidItemCounter = document.getElementById('bid-item-counter');
-const lotteryItemCounter = document.getElementById('lottery-item-counter');
-
-for (const card of document.querySelectorAll('a.items-card')) {
+$('a.items-card').each((i, card) => {
   // 依照商品卡種類，增加計數和取得目前出價
-  const itemCard = new ItemCard(card);
+  const itemCard = new ItemCard($(card));
   itemCard.registerCard();
   if (itemCard.type === TYPE_TAG.bid) { itemCard.fetchCurrentBid() }
-}
+});
 
-/* 動態載入全部商品 */
+// 動態載入全部商品
 const $itemListBox = $('.item-list-box');
 const maxPage = $('.BH-pagebtnA a:last-child').text();
 if (maxPage === '1') { return } // 若僅一頁則不需讀取
